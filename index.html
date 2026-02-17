@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAbelonging.org - Coming Soon</title>
+    <style>
+    
+    .message a {color: #bababa;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .background-slider {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .background-slide {
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: transform 3s ease-in-out;
+            filter: brightness(0.7) saturate(1.2);
+        }
+
+        .background-slide.active {
+            transform: translateX(-100%);
+        }
+
+        .background-slide.exiting {
+            transform: translateX(-200%);
+        }
+
+        .background-slide:nth-child(1) {
+            background: linear-gradient(45deg, #005489, #ee3a43, #005489, #ee3a43, #005489, #ee3a43, #005489);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .background-slide:nth-child(2) {
+            background-image: url('https://belonging2025.org/images/new/1.jpg');
+        }
+
+        .background-slide:nth-child(3) {
+            background-image: url('https://belonging2025.org/images/new/2.jpg');
+        }
+
+        .background-slide:nth-child(4) {
+            background-image: url('https://belonging2025.org/images/new/3.jpg');
+        }
+
+        .background-slide:nth-child(5) {
+            background-image: url('https://belonging2025.org/images/new/4.jpg');
+        }
+
+        .background-slide:nth-child(6) {
+            background-image: url('https://belonging2025.org/images/new/5.jpg');
+        }
+
+        .background-slide:nth-child(7) {
+            background-image: url('https://belonging2025.org/images/new/6.jpg');
+        }
+
+        .background-slide:nth-child(8) {
+            background-image: url('https://belonging2025.org/images/new/7.jpg');
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(1px);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            padding: 2rem;
+        }
+
+        .content-card {
+          background: rgb(255 255 255 / 19%);
+    backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 4rem 3rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: translateY(20px);
+            animation: fadeInUp 1s ease-out forwards;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .logo {
+            width: 320px;
+            height: 140px;
+            margin: 0 auto 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            animation: pulse 3s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 84, 137, 0.3), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .logo-text {
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+        
+            background-size: 300% 300%;
+           color: white;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: textGradient 4s ease-in-out infinite;
+            line-height: 1.2;
+        }
+
+        @keyframes textGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .message {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+            line-height: 1.6;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, #005489 0%, #ee3a43 100%);
+            color: white;
+            border: none;
+            padding: 1.2rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 84, 137, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 1s forwards;
+        }
+        
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(0, 84, 137, 0.6);
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s linear infinite;
+        }
+
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            left: 15%;
+            animation-delay: 0s;
+            animation-duration: 18s;
+        }
+
+        .floating-element:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            left: 35%;
+            animation-delay: 4s;
+            animation-duration: 22s;
+        }
+
+        .floating-element:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            left: 65%;
+            animation-delay: 8s;
+            animation-duration: 20s;
+        }
+
+        .floating-element:nth-child(4) {
+            width: 40px;
+            height: 40px;
+            left: 85%;
+            animation-delay: 12s;
+            animation-duration: 16s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(calc(100vh + 100px)) rotate(0deg);
+                opacity: 0;
+            }
+            5% { 
+                opacity: 1; 
+            }
+            95% { 
+                opacity: 1; 
+            }
+            100% {
+                transform: translateY(-150px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-card {
+                padding: 3rem 2rem;
+                margin: 1rem;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .message {
+                font-size: 1.2rem;
+            }
+            
+            .logo {
+                width: 320px !important;
+                height: 140px !important;
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-slider">
+        <div class="background-slide active"></div>
+        <div class="background-slide"></div>
+        <div class="background-slide"></div>
+        <div class="background-slide"></div>
+        <div class="background-slide"></div>
+        <div class="background-slide"></div>
+        <div class="background-slide"></div>
+        <div class="background-slide"></div>
+    </div>
+
+    <div class="overlay"></div>
+
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+
+    <div class="container">
+        <div class="content-card">
+            <div class="logo">
+                <img src="https://belonging2025.org/images/new/logo.png" alt="Logo">
+            </div>
+            <h1>Coming Soon</h1>
+            <p class="message">We're building an all-new, comprehensive
+resource website, coming this fall. Until then, we encourage you to explore <a href="https://www.salvationarmy.org/resource-hub">IHQ's&nbsp;Resource&nbsp;Page</a></p>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.background-slide');
+        const totalSlides = slides.length;
+
+        function nextSlide() {
+            // Mark current slide as exiting
+            slides[currentSlide].classList.add('exiting');
+            
+            // Move to next slide
+            currentSlide = (currentSlide + 1) % totalSlides;
+            
+            // Activate new slide
+            slides[currentSlide].classList.add('active');
+            
+            // Clean up after animation
+            setTimeout(() => {
+                slides.forEach((slide, index) => {
+                    if (index !== currentSlide) {
+                        slide.classList.remove('active', 'exiting');
+                        slide.style.transform = '';
+                    }
+                });
+            }, 3000);
+        }
+
+        // Initialize first slide
+        slides[0].classList.add('active');
+        
+        // Change background every 4 seconds
+        setInterval(nextSlide, 4000);
+
+        // Add click functionality to button
+        document.querySelector('.cta-button').addEventListener('click', function() {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'translateY(-3px) scale(1.05)';
+                alert('Thanks for your interest! We\'ll notify you when we launch.');
+            }, 150);
+        });
+
+        // Add some interactive sparkle effects on mouse move
+        document.addEventListener('mousemove', function(e) {
+            if (Math.random() > 0.95) {
+                createSparkle(e.clientX, e.clientY);
+            }
+        });
+
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.style.position = 'fixed';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            sparkle.style.width = '6px';
+            sparkle.style.height = '6px';
+            sparkle.style.background = 'white';
+            sparkle.style.borderRadius = '50%';
+            sparkle.style.pointerEvents = 'none';
+            sparkle.style.zIndex = '1000';
+            sparkle.style.animation = 'sparkle 1s ease-out forwards';
+            
+            document.body.appendChild(sparkle);
+            
+            setTimeout(() => {
+                sparkle.remove();
+            }, 1000);
+        }
+
+        // Add sparkle animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes sparkle {
+                0% {
+                    transform: scale(0) rotate(0deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scale(1.5) rotate(180deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

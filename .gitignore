@@ -1,0 +1,16 @@
+# Sensitive config files with credentials
+admin/config.php
+admin/resources-config.php
+includes/settings.php
+
+# Debug/test files
+admin/test-db.php
+
+# User uploads
+uploads/
+
+# Database dumps
+*.sql
+
+# OS files
+.DS_Store
