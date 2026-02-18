@@ -108,7 +108,7 @@ if ($_POST) {
 
             $resources_pdo->commit();
             if (isContentCreator()) {
-                flashMessage('success', 'Resource submitted for admin approval');
+                flashMessage('warning', 'Resource submitted for Approval');
             } else {
                 flashMessage('success', 'Resource created successfully');
             }

@@ -11,13 +11,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $about_content = $_POST['about_content'] ?? '';
     $is_external_resource = isset($_POST['is_external_resource']) ? 1 : 0;
     $external_url = sanitizeInput($_POST['external_url'] ?? '');
+    if (!empty($external_url)) {
+        $external_url = 'https://' . preg_replace('#^https?://#i', '', $external_url);
+    }
     $button_link = sanitizeInput($_POST['button_link'] ?? '');
     $meta_data = sanitizeInput($_POST['meta_data'] ?? '');
     $resource_type_id = (int)($_POST['resource_type_id'] ?? 0);
     $category_id = (int)($_POST['category_id'] ?? 0);
     $language_id = (int)($_POST['language_id'] ?? 0);
     $ministry_id = (int)($_POST['ministry_id'] ?? 0);
-    $is_published = isset($_POST['is_published']) ? 1 : 0;
+    // Content creators cannot publish — resources go to awaiting_approval
+    if (isContentCreator()) {
+        $is_published = 0;
+        $status = 'awaiting_approval';
+    } else {
+        $is_published = isset($_POST['is_published']) ? 1 : 0;
+        $status = $is_published ? 'published' : 'draft';
+    }
 
     // Validation
     if (empty($resource_name)) {
@@ -63,15 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     resource_name, slug, description, about_content, thumbnail_image,
                     is_external_resource, external_url, button_link, meta_data,
                     resource_type_id, category_id, language_id,
-                    ministry_id, is_published, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ministry_id, is_published, status, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $stmt->execute([
                 $resource_name, $slug, $description, $about_content, $thumbnail_path,
                 $is_external_resource, $external_url, $button_link, $meta_data,
                 $resource_type_id ?: null, $category_id ?: null,
-                $language_id ?: null, $ministry_id ?: null, $is_published, $_SESSION['admin_id']
+                $language_id ?: null, $ministry_id ?: null, $is_published, $status, $_SESSION['admin_id']
             ]);
 
             $resource_id = $resources_pdo->lastInsertId();
@@ -108,7 +118,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $resources_pdo->commit();
-            flashMessage('success', 'Resource created successfully');
+            if (isContentCreator()) {
+                flashMessage('warning', 'Resource submitted for Approval');
+            } else {
+                flashMessage('success', 'Resource created successfully');
+            }
             header('Location: resources.php');
             exit;
 
@@ -325,9 +339,12 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries WHERE is_ac
                                     <!-- External URL Field (shows when checkbox is checked) -->
                                     <div class="mb-3" id="external_url_group">
                                         <label for="external_url" class="form-label">External Resource URL *</label>
-                                        <input type="url" class="form-control" id="external_url" name="external_url"
-                                               value="<?= htmlspecialchars($_POST['external_url'] ?? '') ?>"
-                                               placeholder="https://example.com/resource">
+                                        <div class="input-group">
+                                            <span class="input-group-text">https://</span>
+                                            <input type="text" class="form-control" id="external_url" name="external_url"
+                                                   value="<?= htmlspecialchars(preg_replace('#^https?://#i', '', $_POST['external_url'] ?? '')) ?>"
+                                                   placeholder="www.example.com/resource">
+                                        </div>
                                         <div class="form-text">The URL where users will be redirected when they click the resource card.</div>
                                     </div>
 
@@ -349,6 +366,7 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries WHERE is_ac
                                         <div id="image_preview" class="mt-2"></div>
                                     </div>
 
+                                    <?php if (!isContentCreator()): ?>
                                     <div class="mb-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="is_published" name="is_published"
@@ -358,6 +376,13 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries WHERE is_ac
                                             </label>
                                         </div>
                                     </div>
+                                    <?php else: ?>
+                                    <div class="mb-3">
+                                        <div class="alert alert-info py-2 mb-0">
+                                            <i class="fas fa-info-circle"></i> Your resource will be submitted for admin approval before publishing.
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

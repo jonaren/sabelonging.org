@@ -47,6 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $about_content = $_POST['about_content'] ?? '';
     $is_external_resource = isset($_POST['is_external_resource']) ? 1 : 0;
     $external_url = sanitizeInput($_POST['external_url'] ?? '');
+    if (!empty($external_url)) {
+        $external_url = 'https://' . preg_replace('#^https?://#i', '', $external_url);
+    }
     $button_link = sanitizeInput($_POST['button_link'] ?? '');
     $meta_data = sanitizeInput($_POST['meta_data'] ?? '');
     $resource_type_id = (int)($_POST['resource_type_id'] ?? 0);
@@ -410,9 +413,12 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries WHERE is_ac
                                     <!-- External URL Field -->
                                     <div class="mb-3" id="external_url_group">
                                         <label for="external_url" class="form-label">External Resource URL *</label>
-                                        <input type="url" class="form-control" id="external_url" name="external_url"
-                                               value="<?= htmlspecialchars($resource['external_url']) ?>"
-                                               placeholder="https://example.com/resource">
+                                        <div class="input-group">
+                                            <span class="input-group-text">https://</span>
+                                            <input type="text" class="form-control" id="external_url" name="external_url"
+                                                   value="<?= htmlspecialchars(preg_replace('#^https?://#i', '', $resource['external_url'] ?? '')) ?>"
+                                                   placeholder="www.example.com/resource">
+                                        </div>
                                         <div class="form-text">The URL where users will be redirected when they click the resource card.</div>
                                     </div>
 

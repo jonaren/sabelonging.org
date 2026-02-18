@@ -192,13 +192,6 @@ $og_type = 'article';
                         <i class="fas fa-calendar"></i> 
                         Added <?= date('F j, Y', strtotime($resource['created_at'])) ?>
                     </small>
-                    <?php if ($resource['created_by_name']): ?>
-                        <br>
-                        <small class="text-muted">
-                            <i class="fas fa-user"></i> 
-                            by <?= htmlspecialchars($resource['created_by_name']) ?>
-                        </small>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
