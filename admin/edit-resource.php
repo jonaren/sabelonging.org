@@ -22,6 +22,20 @@ if (!$resource) {
     exit;
 }
 
+// Content creators can only edit their own unpublished resources
+if (isContentCreator()) {
+    if ($resource['created_by'] != $_SESSION['admin_id']) {
+        flashMessage('error', 'You can only edit your own resources');
+        header('Location: resources.php');
+        exit;
+    }
+    if ($resource['is_published']) {
+        flashMessage('error', 'Published resources cannot be edited');
+        header('Location: resources.php');
+        exit;
+    }
+}
+
 // Fetch existing files
 $stmt = $resources_pdo->prepare("SELECT * FROM resource_files WHERE resource_id = ?");
 $stmt->execute([$resource_id]);
@@ -39,7 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_id = (int)($_POST['category_id'] ?? 0);
     $language_id = (int)($_POST['language_id'] ?? 0);
     $ministry_id = (int)($_POST['ministry_id'] ?? 0);
-    $is_published = isset($_POST['is_published']) ? 1 : 0;
+    // Content creators cannot publish
+    if (isContentCreator()) {
+        $is_published = 0;
+        $status = 'awaiting_approval';
+    } else {
+        $is_published = isset($_POST['is_published']) ? 1 : 0;
+        $status = $is_published ? 'published' : 'draft';
+    }
 
     // Validation
     if (empty($resource_name)) {
@@ -97,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     thumbnail_image = ?, is_external_resource = ?, external_url = ?,
                     button_link = ?, meta_data = ?, resource_type_id = ?,
                     category_id = ?, language_id = ?, ministry_id = ?,
-                    is_published = ?, updated_by = ?
+                    is_published = ?, status = ?, updated_by = ?
                 WHERE id = ?
             ");
 
@@ -106,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $thumbnail_path, $is_external_resource, $external_url,
                 $button_link, $meta_data, $resource_type_id ?: null,
                 $category_id ?: null, $language_id ?: null, $ministry_id ?: null,
-                $is_published, $_SESSION['admin_id'], $resource_id
+                $is_published, $status, $_SESSION['admin_id'], $resource_id
             ]);
 
             // Handle file deletions
@@ -419,6 +440,7 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries WHERE is_ac
                                         <div id="image_preview" class="mt-2"></div>
                                     </div>
 
+                                    <?php if (!isContentCreator()): ?>
                                     <div class="mb-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="is_published" name="is_published"
@@ -428,6 +450,13 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries WHERE is_ac
                                             </label>
                                         </div>
                                     </div>
+                                    <?php else: ?>
+                                    <div class="mb-3">
+                                        <div class="alert alert-warning py-2 mb-0">
+                                            <i class="fas fa-clock"></i> Awaiting admin approval
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

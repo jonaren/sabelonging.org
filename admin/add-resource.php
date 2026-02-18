@@ -15,7 +15,14 @@ if ($_POST) {
     $category_id = (int)($_POST['category_id'] ?? 0);
     $language_id = (int)($_POST['language_id'] ?? 0);
     $ministry_id = (int)($_POST['ministry_id'] ?? 0);
-    $is_published = isset($_POST['is_published']) ? 1 : 0;
+    // Content creators cannot publish — resources go to awaiting_approval
+    if (isContentCreator()) {
+        $is_published = 0;
+        $status = 'awaiting_approval';
+    } else {
+        $is_published = isset($_POST['is_published']) ? 1 : 0;
+        $status = $is_published ? 'published' : 'draft';
+    }
 
     // Validation
     if (empty($resource_name)) {
@@ -56,14 +63,14 @@ if ($_POST) {
                 INSERT INTO resources (
                     resource_name, slug, description, about_content, thumbnail_image,
                     button_link, meta_data, resource_type_id, category_id, language_id,
-                    ministry_id, is_published, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ministry_id, is_published, status, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $stmt->execute([
                 $resource_name, $slug, $description, $about_content, $thumbnail_path,
                 $button_link, $meta_data, $resource_type_id ?: null, $category_id ?: null,
-                $language_id ?: null, $ministry_id ?: null, $is_published, $_SESSION['admin_id']
+                $language_id ?: null, $ministry_id ?: null, $is_published, $status, $_SESSION['admin_id']
             ]);
 
             $resource_id = $resources_pdo->lastInsertId();
@@ -100,7 +107,11 @@ if ($_POST) {
             }
 
             $resources_pdo->commit();
-            flashMessage('success', 'Resource created successfully');
+            if (isContentCreator()) {
+                flashMessage('success', 'Resource submitted for admin approval');
+            } else {
+                flashMessage('success', 'Resource created successfully');
+            }
             header('Location: resources.php');
             exit;
 
@@ -312,15 +323,23 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries ORDER BY na
                                         <div id="image_preview" class="mt-2"></div>
                                     </div>
                                     
+                                    <?php if (!isContentCreator()): ?>
                                     <div class="mb-3">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="is_published" name="is_published" 
+                                            <input class="form-check-input" type="checkbox" id="is_published" name="is_published"
                                                    <?= isset($_POST['is_published']) ? 'checked' : '' ?>>
                                             <label class="form-check-label" for="is_published">
                                                 Publish immediately
                                             </label>
                                         </div>
                                     </div>
+                                    <?php else: ?>
+                                    <div class="mb-3">
+                                        <div class="alert alert-info py-2 mb-0">
+                                            <i class="fas fa-info-circle"></i> Your resource will be submitted for admin approval before publishing.
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

@@ -154,6 +154,10 @@ $users = $stmt->fetchAll();
             background-color: #6c757d;
         }
 
+        .badge-content-creator {
+            background-color: #6f42c1;
+        }
+
         .badge-active {
             background-color: #28a745;
         }
@@ -284,6 +288,8 @@ $users = $stmt->fetchAll();
                                             <td>
                                                 <?php if ($user['role'] === 'admin'): ?>
                                                     <span class="badge badge-admin">Admin</span>
+                                                <?php elseif ($user['role'] === 'content_creator'): ?>
+                                                    <span class="badge badge-content-creator">Content Creator</span>
                                                 <?php else: ?>
                                                     <span class="badge badge-editor">Editor</span>
                                                 <?php endif; ?>
@@ -364,11 +370,13 @@ $users = $stmt->fetchAll();
                         <div class="mb-3">
                             <label for="role" class="form-label">Role *</label>
                             <select class="form-select" id="role" name="role" required>
+                                <option value="content_creator">Content Creator</option>
                                 <option value="editor">Editor</option>
                                 <option value="admin">Admin</option>
                             </select>
                             <div class="form-text">
-                                <strong>Editor:</strong> Can manage resources<br>
+                                <strong>Content Creator:</strong> Can create resources, awaits admin approval to publish<br>
+                                <strong>Editor:</strong> Can manage and publish resources<br>
                                 <strong>Admin:</strong> Full access including user management
                             </div>
                         </div>

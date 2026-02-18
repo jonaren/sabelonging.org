@@ -1,4 +1,14 @@
 <?php
+// App Engine Standard PHP uses index.php as a router script.
+// Route to the correct PHP file if it exists.
+$uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$file = __DIR__ . $uri;
+if ($uri !== '/' && $uri !== '/index.php' && file_exists($file) && !is_dir($file) && substr($uri, -4) === '.php') {
+    chdir(dirname($file));
+    require $file;
+    exit;
+}
+
 require_once 'admin/config.php';
 
 // Get all resources from database

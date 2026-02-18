@@ -22,6 +22,10 @@ try {
     $stmt = $resources_pdo->query("SELECT COUNT(*) as total FROM resource_types");
     $stats['total_types'] = $stmt->fetch()['total'];
 
+    // Awaiting approval
+    $stmt = $resources_pdo->query("SELECT COUNT(*) as total FROM resources WHERE status = 'awaiting_approval'");
+    $stats['awaiting_approval'] = $stmt->fetch()['total'];
+
     // Recent resources
     $stmt = $resources_pdo->query("
         SELECT r.*, rt.name as resource_type_name, c.name as category_name
@@ -49,7 +53,8 @@ try {
         'total_resources' => 0,
         'published_resources' => 0,
         'total_categories' => 0,
-        'total_types' => 0
+        'total_types' => 0,
+        'awaiting_approval' => 0
     ];
     $recent_resources = [];
     $resources_by_type = [];
@@ -329,6 +334,24 @@ try {
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-md-3">
+                        <a href="resources.php?status=awaiting_approval" class="text-decoration-none">
+                            <div class="card stat-card text-white" style="background-color: #fd7e14;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h3 class="mb-1"><?= $stats['awaiting_approval'] ?></h3>
+                                            <p class="card-text mb-0">Awaiting Approval</p>
+                                        </div>
+                                        <div class="stat-icon">
+                                            <i class="fas fa-hourglass-half"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
                 
                 <div class="row">
@@ -380,9 +403,13 @@ try {
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <span class="badge bg-<?= $resource['is_published'] ? 'success' : 'warning' ?>">
-                                                            <?= $resource['is_published'] ? 'Published' : 'Draft' ?>
-                                                        </span>
+                                                        <?php if (($resource['status'] ?? '') === 'awaiting_approval'): ?>
+                                                            <span class="badge" style="background-color:#fd7e14;">Awaiting Approval</span>
+                                                        <?php elseif ($resource['is_published']): ?>
+                                                            <span class="badge bg-success">Published</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-secondary">Draft</span>
+                                                        <?php endif; ?>
                                                     </td>
                                                     <td>
                                                         <small><?= date('M j, Y', strtotime($resource['created_at'])) ?></small>

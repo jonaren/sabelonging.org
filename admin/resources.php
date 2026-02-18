@@ -2,9 +2,35 @@
 require_once 'resources-config.php';
 requireLogin();
 
+// Handle approve action (admin/editor only)
+if (isset($_GET['action']) && $_GET['action'] === 'approve' && isset($_GET['id']) && !isContentCreator()) {
+    $id = (int)$_GET['id'];
+    try {
+        $stmt = $resources_pdo->prepare("UPDATE resources SET is_published = 1, status = 'published' WHERE id = ?");
+        $stmt->execute([$id]);
+        flashMessage('success', 'Resource approved and published');
+    } catch (Exception $e) {
+        flashMessage('error', 'Error approving resource: ' . $e->getMessage());
+    }
+    header('Location: resources.php');
+    exit;
+}
+
 // Handle delete action
 if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
     $id = (int)$_GET['id'];
+
+    // Content creators can only delete their own resources
+    if (isContentCreator()) {
+        $stmt = $resources_pdo->prepare("SELECT created_by FROM resources WHERE id = ?");
+        $stmt->execute([$id]);
+        $check = $stmt->fetch();
+        if (!$check || $check['created_by'] != $_SESSION['admin_id']) {
+            flashMessage('error', 'You can only delete your own resources');
+            header('Location: resources.php');
+            exit;
+        }
+    }
 
     try {
         $resources_pdo->beginTransaction();
@@ -80,8 +106,18 @@ if (!empty($resource_type_filter)) {
 }
 
 if ($status_filter !== '') {
-    $where_clauses[] = "r.is_published = ?";
-    $params[] = $status_filter;
+    if ($status_filter === 'awaiting_approval') {
+        $where_clauses[] = "r.status = 'awaiting_approval'";
+    } else {
+        $where_clauses[] = "r.is_published = ?";
+        $params[] = $status_filter;
+    }
+}
+
+// Content creators only see their own resources
+if (isContentCreator()) {
+    $where_clauses[] = "r.created_by = ?";
+    $params[] = $_SESSION['admin_id'];
 }
 
 $where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
@@ -185,6 +221,10 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
 
         .badge-draft {
             background-color: #6c757d;
+        }
+
+        .badge-awaiting {
+            background-color: #fd7e14;
         }
 
         .badge-external {
@@ -311,6 +351,7 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
                                     <option value="">All Status</option>
                                     <option value="1" <?= $status_filter === '1' ? 'selected' : '' ?>>Published</option>
                                     <option value="0" <?= $status_filter === '0' ? 'selected' : '' ?>>Draft</option>
+                                    <option value="awaiting_approval" <?= $status_filter === 'awaiting_approval' ? 'selected' : '' ?>>Awaiting Approval</option>
                                 </select>
                             </div>
                             <div class="col-md-2 d-flex align-items-end">
@@ -381,7 +422,9 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
                                                     <?= htmlspecialchars($resource['category_name'] ?? 'N/A') ?>
                                                 </td>
                                                 <td>
-                                                    <?php if ($resource['is_published']): ?>
+                                                    <?php if (($resource['status'] ?? '') === 'awaiting_approval'): ?>
+                                                        <span class="badge badge-awaiting">Awaiting Approval</span>
+                                                    <?php elseif ($resource['is_published']): ?>
                                                         <span class="badge badge-published">Published</span>
                                                     <?php else: ?>
                                                         <span class="badge badge-draft">Draft</span>
@@ -397,6 +440,14 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="text-end table-actions">
+                                                    <?php if (!isContentCreator() && ($resource['status'] ?? '') === 'awaiting_approval'): ?>
+                                                    <a href="?action=approve&id=<?= $resource['id'] ?>"
+                                                       class="btn btn-sm btn-success"
+                                                       title="Approve & Publish"
+                                                       onclick="return confirm('Approve and publish this resource?')">
+                                                        <i class="fas fa-check"></i>
+                                                    </a>
+                                                    <?php endif; ?>
                                                     <a href="edit-resource.php?id=<?= $resource['id'] ?>"
                                                        class="btn btn-sm btn-outline-primary"
                                                        title="Edit">
