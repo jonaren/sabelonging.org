@@ -17,6 +17,14 @@ include 'includes/header.php';
         </header></div>
        </div>
             </div>
+
+        <div class="container">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+  <strong>Disclaimer:</strong> The resources offered on this site have been prayerfully and thoughtfully reviewed. While aligned with Salvation Army doctrine and values, some materials may reflect theological differences not specifically identified. We encourage users to engage with discernment, guided by Scripture and trusted spiritual leadership. Inclusion does not imply full endorsement of all views.
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+        </div>
+
             <div class="container">
         <!-- Filters -->
         <div class="card filter-card mb-4">
@@ -64,6 +72,12 @@ include 'includes/header.php';
             </div>
             <p class="mt-3 text-muted">Loading resources...</p>
         </div>
+
+        <!-- Disclaimer -->
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+  <strong>Disclaimer:</strong> The resources offered on this site have been prayerfully and thoughtfully reviewed. While aligned with Salvation Army doctrine and values, some materials may reflect theological differences not specifically identified. We encourage users to engage with discernment, guided by Scripture and trusted spiritual leadership. Inclusion does not imply full endorsement of all views.
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
 
         <!-- Resources Grid -->
         <div class="row g-4" id="resourcesGrid"></div>

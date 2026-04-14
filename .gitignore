@@ -14,3 +14,9 @@ uploads/
 
 # OS files
 .DS_Store
+
+# Local-only docs
+DEPLOY.md
+
+# Composer dependencies (regenerate with: composer install)
+vendor/
