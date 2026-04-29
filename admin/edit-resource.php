@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $button_link = sanitizeInput($_POST['button_link'] ?? '');
     $meta_data = sanitizeInput($_POST['meta_data'] ?? '');
     $resource_type_id = (int)($_POST['resource_type_id'] ?? 0);
-    $category_id = (int)($_POST['category_id'] ?? 0);
+    $category_ids = array_filter(array_map('intval', $_POST['category_ids'] ?? []));
     $language_id = (int)($_POST['language_id'] ?? 0);
     $ministry_id = (int)($_POST['ministry_id'] ?? 0);
     // Content creators cannot publish
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     resource_name = ?, slug = ?, description = ?, about_content = ?,
                     thumbnail_image = ?, is_external_resource = ?, external_url = ?,
                     button_link = ?, meta_data = ?, resource_type_id = ?,
-                    category_id = ?, language_id = ?, ministry_id = ?,
+                    language_id = ?, ministry_id = ?,
                     is_published = ?, status = ?, updated_by = ?
                 WHERE id = ?
             ");
@@ -129,9 +129,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $resource_name, $slug, $description, $about_content,
                 $thumbnail_path, $is_external_resource, $external_url,
                 $button_link, $meta_data, $resource_type_id ?: null,
-                $category_id ?: null, $language_id ?: null, $ministry_id ?: null,
+                $language_id ?: null, $ministry_id ?: null,
                 $is_published, $status, $_SESSION['admin_id'], $resource_id
             ]);
+
+            // Update categories in junction table
+            $resources_pdo->prepare("DELETE FROM resource_categories WHERE resource_id = ?")->execute([$resource_id]);
+            foreach ($category_ids as $cat_id) {
+                $resources_pdo->prepare("INSERT IGNORE INTO resource_categories (resource_id, category_id) VALUES (?, ?)")->execute([$resource_id, $cat_id]);
+            }
 
             // Handle file deletions
             if (isset($_POST['delete_files']) && is_array($_POST['delete_files'])) {
@@ -204,6 +210,15 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
 $categories = $resources_pdo->query("SELECT id, name FROM categories WHERE is_active = 1 ORDER BY name")->fetchAll();
 $languages = $resources_pdo->query("SELECT id, name FROM languages WHERE is_active = 1 ORDER BY name")->fetchAll();
 $ministries = $resources_pdo->query("SELECT id, name FROM ministries WHERE is_active = 1 ORDER BY name")->fetchAll();
+
+// Get existing category selections for this resource
+$stmt = $resources_pdo->prepare("SELECT category_id FROM resource_categories WHERE resource_id = ?");
+$stmt->execute([$resource_id]);
+$existing_category_ids = array_column($stmt->fetchAll(), 'category_id');
+// If no junction table entries yet, fall back to legacy category_id
+if (empty($existing_category_ids) && !empty($resource['category_id'])) {
+    $existing_category_ids = [$resource['category_id']];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -490,16 +505,23 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries WHERE is_ac
 
                                 <div class="col-md-3">
                                     <div class="mb-3">
-                                        <label for="category_id" class="form-label">Category</label>
-                                        <select class="form-select" id="category_id" name="category_id">
-                                            <option value="">Select Category</option>
-                                            <?php foreach ($categories as $category): ?>
-                                                <option value="<?= $category['id'] ?>"
-                                                        <?= $resource['category_id'] == $category['id'] ? 'selected' : '' ?>>
+                                        <label class="form-label">Priority / Category</label>
+                                        <?php
+                                        $selected_cat_ids = isset($_POST['category_ids'])
+                                            ? array_map('intval', $_POST['category_ids'])
+                                            : array_map('intval', $existing_category_ids);
+                                        foreach ($categories as $category): ?>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                       id="cat_<?= $category['id'] ?>"
+                                                       name="category_ids[]"
+                                                       value="<?= $category['id'] ?>"
+                                                       <?= in_array((int)$category['id'], $selected_cat_ids) ? 'checked' : '' ?>>
+                                                <label class="form-check-label" for="cat_<?= $category['id'] ?>">
                                                     <?= htmlspecialchars($category['name']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                                </label>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 </div>
 

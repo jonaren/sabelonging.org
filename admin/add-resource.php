@@ -12,7 +12,7 @@ if ($_POST) {
     $button_link = sanitizeInput($_POST['button_link'] ?? '');
     $meta_data = sanitizeInput($_POST['meta_data'] ?? '');
     $resource_type_id = (int)($_POST['resource_type_id'] ?? 0);
-    $category_id = (int)($_POST['category_id'] ?? 0);
+    $category_ids = array_filter(array_map('intval', $_POST['category_ids'] ?? []));
     $language_id = (int)($_POST['language_id'] ?? 0);
     $ministry_id = (int)($_POST['ministry_id'] ?? 0);
     // Content creators cannot publish — resources go to awaiting_approval
@@ -62,18 +62,24 @@ if ($_POST) {
             $stmt = $resources_pdo->prepare("
                 INSERT INTO resources (
                     resource_name, slug, description, about_content, thumbnail_image,
-                    button_link, meta_data, resource_type_id, category_id, language_id,
+                    button_link, meta_data, resource_type_id, language_id,
                     ministry_id, is_published, status, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $stmt->execute([
                 $resource_name, $slug, $description, $about_content, $thumbnail_path,
-                $button_link, $meta_data, $resource_type_id ?: null, $category_id ?: null,
+                $button_link, $meta_data, $resource_type_id ?: null,
                 $language_id ?: null, $ministry_id ?: null, $is_published, $status, $_SESSION['admin_id']
             ]);
 
             $resource_id = $resources_pdo->lastInsertId();
+
+            // Insert categories into junction table
+            foreach ($category_ids as $cat_id) {
+                $stmt = $resources_pdo->prepare("INSERT IGNORE INTO resource_categories (resource_id, category_id) VALUES (?, ?)");
+                $stmt->execute([$resource_id, $cat_id]);
+            }
 
             // Handle additional file uploads
             if (isset($_FILES['additional_files'])) {
@@ -367,16 +373,21 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries ORDER BY na
                                 
                                 <div class="col-md-3">
                                     <div class="mb-3">
-                                        <label for="category_id" class="form-label">Category</label>
-                                        <select class="form-select" id="category_id" name="category_id">
-                                            <option value="">Select Category</option>
-                                            <?php foreach ($categories as $category): ?>
-                                                <option value="<?= $category['id'] ?>" 
-                                                        <?= ($_POST['category_id'] ?? '') == $category['id'] ? 'selected' : '' ?>>
+                                        <label class="form-label">Priority / Category</label>
+                                        <?php
+                                        $selected_cat_ids = array_map('intval', $_POST['category_ids'] ?? []);
+                                        foreach ($categories as $category): ?>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                       id="cat_<?= $category['id'] ?>"
+                                                       name="category_ids[]"
+                                                       value="<?= $category['id'] ?>"
+                                                       <?= in_array((int)$category['id'], $selected_cat_ids) ? 'checked' : '' ?>>
+                                                <label class="form-check-label" for="cat_<?= $category['id'] ?>">
                                                     <?= htmlspecialchars($category['name']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                                </label>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 </div>
                                 

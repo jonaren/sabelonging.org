@@ -517,18 +517,27 @@ require_once __DIR__ . '/settings.php';
                             <i class="<?= htmlspecialchars(get_setting('nav_link_1_icon', 'fas fa-home')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_1_text', 'Resources')) ?>
                         </a>
                     </li>
-                    <?php if (get_setting('nav_link_2_text')): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= htmlspecialchars(get_setting('nav_link_2_url')) ?>" <?= get_setting('nav_link_2_external') == '1' ? 'target="_blank"' : '' ?>>
-                            <i class="<?= htmlspecialchars(get_setting('nav_link_2_icon')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_2_text')) ?>
+                    <?php if (get_setting('nav_link_2_text') || get_setting('nav_link_3_text')): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe"></i> Other Resources
                         </a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if (get_setting('nav_link_3_text')): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= htmlspecialchars(get_setting('nav_link_3_url')) ?>" <?= get_setting('nav_link_3_external') == '1' ? 'target="_blank"' : '' ?>>
-                            <i class="<?= htmlspecialchars(get_setting('nav_link_3_icon')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_3_text')) ?>
-                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <?php if (get_setting('nav_link_2_text')): ?>
+                            <li>
+                                <a class="dropdown-item" href="<?= htmlspecialchars(get_setting('nav_link_2_url')) ?>" <?= get_setting('nav_link_2_external') == '1' ? 'target="_blank"' : '' ?>>
+                                    <i class="<?= htmlspecialchars(get_setting('nav_link_2_icon')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_2_text')) ?>
+                                </a>
+                            </li>
+                            <?php endif; ?>
+                            <?php if (get_setting('nav_link_3_text')): ?>
+                            <li>
+                                <a class="dropdown-item" href="<?= htmlspecialchars(get_setting('nav_link_3_url')) ?>" <?= get_setting('nav_link_3_external') == '1' ? 'target="_blank"' : '' ?>>
+                                    <i class="<?= htmlspecialchars(get_setting('nav_link_3_icon')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_3_text')) ?>
+                                </a>
+                            </li>
+                            <?php endif; ?>
+                        </ul>
                     </li>
                     <?php endif; ?>
                 </ul>

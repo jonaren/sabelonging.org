@@ -134,6 +134,7 @@ include 'includes/header.php';
             'Study': '<i class="fas fa-clipboard-list"></i>',
             'Research': '<i class="fas fa-search"></i>',
             'Report': '<i class="fas fa-chart-bar"></i>',
+            'Sermon': '<i class="fas fa-church"></i>',
             'default': '<i class="fas fa-bookmark"></i>'
         };
 
@@ -170,7 +171,7 @@ include 'includes/header.php';
 
         function populateFilters() {
             const resourceTypes = [...new Set(allResources.map(r => r.ResourceType).filter(Boolean))].sort();
-            const categories = [...new Set(allResources.map(r => r.Category).filter(Boolean))].sort();
+            const categories = [...new Set(allResources.flatMap(r => r.Categories || []).filter(Boolean))].sort();
             const languages = [...new Set(allResources.map(r => r.Language).filter(Boolean))].sort();
             const ministries = [...new Set(allResources.map(r => r.Ministry).filter(Boolean))].sort();
 
@@ -204,7 +205,7 @@ include 'includes/header.php';
                     (resource.MetaData && resource.MetaData.toLowerCase().includes(search));
 
                 const matchesType = !resourceType || resource.ResourceType === resourceType;
-                const matchesCategory = !category || resource.Category === category;
+                const matchesCategory = !category || (resource.Categories && resource.Categories.includes(category));
                 const matchesLanguage = !language || resource.Language === language;
                 const matchesMinistry = !ministry || resource.Ministry === ministry;
 
@@ -256,7 +257,7 @@ include 'includes/header.php';
                                 <img src="${thumbnailSrc}" alt="${resource.ResourceName}" class="card-img-top" onerror="this.src='${getRandomPlaceholder()}'">
                                 <div class="card-img-overlay">
                                     ${resource.ResourceType ? `<span class="badge tag overlay-tag tag-resource-type">${icon} ${resource.ResourceType}</span>` : ''}
-                                    ${resource.Category ? `<span class="badge tag overlay-tag tag-category"><i class="fas fa-tag"></i> ${resource.Category}</span>` : ''}
+                                    ${(resource.Categories || []).map(cat => `<span class="badge tag overlay-tag tag-category"><i class="fas fa-tag"></i> ${cat}</span>`).join('')}
                                     ${resource.Ministry ? `<span class="badge tag overlay-tag tag-ministry"><i class="fas fa-church"></i> ${resource.Ministry}</span>` : ''}
                                 </div>
                             </div>

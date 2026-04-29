@@ -27,17 +27,21 @@ try {
             r.meta_data AS MetaData,
             rt.name AS ResourceType,
             rt.icon AS ResourceTypeIcon,
-            c.name AS Category,
+            GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ',') AS Categories,
             l.name AS Language,
             m.name AS Ministry,
             r.view_count,
             r.created_at
         FROM resources r
         LEFT JOIN resource_types rt ON r.resource_type_id = rt.id
-        LEFT JOIN categories c ON r.category_id = c.id
+        LEFT JOIN resource_categories rc ON r.id = rc.resource_id
+        LEFT JOIN categories c ON rc.category_id = c.id
         LEFT JOIN languages l ON r.language_id = l.id
         LEFT JOIN ministries m ON r.ministry_id = m.id
         WHERE r.is_published = 1
+        GROUP BY r.id, r.resource_name, r.slug, r.description, r.thumbnail_image,
+                 r.is_external_resource, r.external_url, r.button_link, r.meta_data,
+                 rt.name, rt.icon, l.name, m.name, r.view_count, r.created_at
         ORDER BY r.created_at DESC
     ";
 
@@ -69,7 +73,7 @@ try {
             'MetaData' => $resource['MetaData'] ?: '',
             'ResourceType' => $resource['ResourceType'] ?: '',
             'ResourceTypeIcon' => $resource['ResourceTypeIcon'] ?: 'fa-bookmark',
-            'Category' => $resource['Category'] ?: '',
+            'Categories' => $resource['Categories'] ? explode(',', $resource['Categories']) : [],
             'Language' => $resource['Language'] ?: '',
             'Ministry' => $resource['Ministry'] ?: '',
             'view_count' => $resource['view_count'],
