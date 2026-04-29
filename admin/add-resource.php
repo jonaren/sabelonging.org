@@ -114,6 +114,7 @@ if ($_POST) {
 
             $resources_pdo->commit();
             if (isContentCreator()) {
+                sendDraftNotification($resource_id, $resource_name, $_SESSION['admin_username']);
                 flashMessage('warning', 'Resource submitted for Approval');
             } else {
                 flashMessage('success', 'Resource created successfully');
