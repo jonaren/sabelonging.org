@@ -88,14 +88,14 @@ $typeIcon = $resourceTypeIcons[$resource['resource_type_name']] ?? 'fas fa-bookm
 
 // Placeholder images for when ThumbnailImage is empty
 $placeholderImages = [
-    'https://sabelonging.org/images/tn-1.jpg',
-    'https://sabelonging.org/images/tn-2.jpg',
-    'https://sabelonging.org/images/tn-3.jpg',
-    'https://sabelonging.org/images/tn-4.jpg',
-    'https://sabelonging.org/images/tn-5.jpg',
-    'https://sabelonging.org/images/tn-6.jpg',
-    'https://sabelonging.org/images/tn-7.jpg',
-    'https://sabelonging.org/images/tn-8.jpg'
+    '/images/tn-1.jpg',
+    '/images/tn-2.jpg',
+    '/images/tn-3.jpg',
+    '/images/tn-4.jpg',
+    '/images/tn-5.jpg',
+    '/images/tn-6.jpg',
+    '/images/tn-7.jpg',
+    '/images/tn-8.jpg'
 ];
 
 function getRandomPlaceholder($placeholders) {

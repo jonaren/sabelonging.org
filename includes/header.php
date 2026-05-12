@@ -141,7 +141,7 @@ require_once __DIR__ . '/settings.php';
             -webkit-line-clamp: 5;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: max-height 0.3s ease;
         }
 
         .card-description.expanded {
@@ -150,18 +150,40 @@ require_once __DIR__ . '/settings.php';
         }
 
         .read-more-btn {
-            background: none;
-            border: none;
-            padding: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            margin: 6px auto 10px;
+            background: #fff;
+            border: 1.5px solid #1d486b;
+            border-radius: 50%;
             color: #1d486b;
-            font-size: 0.85rem;
             cursor: pointer;
-            text-decoration: underline;
-            margin-top: 4px;
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            flex-shrink: 0;
+        }
+
+        .read-more-btn i {
+            font-size: 0.75rem;
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .read-more-btn.expanded i {
+            transform: rotate(180deg);
         }
 
         .read-more-btn:hover {
-            color: #102a41;
+            background: #1d486b;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(29,72,107,0.25);
+        }
+
+        .read-more-btn.visible {
+            display: flex;
         }
 
         .tag {
@@ -532,7 +554,7 @@ require_once __DIR__ . '/settings.php';
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
             <a class="navbar-brand" href="<?= htmlspecialchars(get_setting('nav_link_1_url', '/resources.html')) ?>">
-                <img style="height: 90px !important;" src="https://sabelonging.org/images/newlogo.png" alt="<?= htmlspecialchars(get_setting('site_name', 'SAbelonging')) ?> Logo">
+                <img style="height: 90px !important;" src="/images/newlogo.png" alt="<?= htmlspecialchars(get_setting('site_name', 'SAbelonging')) ?> Logo">
                 <span><?= htmlspecialchars(get_setting('site_name', 'SAbelonging')) ?></span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">

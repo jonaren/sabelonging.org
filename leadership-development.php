@@ -5,7 +5,6 @@ include 'includes/header.php';
 ?>
 
     <div class="container my-5">
-        <!-- Header -->
         <header class="text-center mb-5">
             <h1 class="display-4 main-header mb-3">Leadership Development</h1>
             <p class="lead subtitle">Resources focused on developing effective leadership skills and capabilities</p>
@@ -86,14 +85,14 @@ include 'includes/header.php';
 
         // Placeholder images for when ThumbnailImage is empty
         const placeholderImages = [
-            'https://sabelonging.org/images/tn-1.jpg',
-            'https://sabelonging.org/images/tn-2.jpg',
-            'https://sabelonging.org/images/tn-3.jpg',
-            'https://sabelonging.org/images/tn-4.jpg',
-            'https://sabelonging.org/images/tn-5.jpg',
-            'https://sabelonging.org/images/tn-6.jpg',
-            'https://sabelonging.org/images/tn-7.jpg',
-            'https://sabelonging.org/images/tn-8.jpg'
+            '/images/tn-1.jpg',
+            '/images/tn-2.jpg',
+            '/images/tn-3.jpg',
+            '/images/tn-4.jpg',
+            '/images/tn-5.jpg',
+            '/images/tn-6.jpg',
+            '/images/tn-7.jpg',
+            '/images/tn-8.jpg'
         ];
 
         // Resource type icons mapping (Font Awesome icons)
@@ -133,7 +132,7 @@ include 'includes/header.php';
                 }
 
                 // Filter resources by category immediately
-                allResources = data.resources.filter(r => r.Category === CATEGORY_FILTER);
+                allResources = data.resources.filter(r => r.Categories && r.Categories.includes(CATEGORY_FILTER));
 
                 populateFilters();
                 filteredResources = [...allResources];
@@ -240,7 +239,8 @@ include 'includes/header.php';
                             </div>
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">${resource.ResourceName}</h5>
-                                <p class="card-text flex-grow-1">${resource.Description}</p>
+                                <p class="card-text card-description">${resource.Description}</p>
+                                <button class="read-more-btn" onclick="toggleDescription(this)"><i class="fas fa-chevron-down"></i></button>
                                 ${resource.ButtonLink ? `<a href="${resource.ButtonLink}" target="${target}" ${rel ? `rel="${rel}"` : ''} class="btn btn-primary mt-auto">View Resource</a>` : ''}
                             </div>
                         </div>
@@ -255,6 +255,7 @@ include 'includes/header.php';
             }
 
             displayedCount = endIndex;
+            initReadMoreButtons();
 
             // Update pagination info and controls
             if (filteredResources.length > resourcesPerPage) {
@@ -283,6 +284,27 @@ include 'includes/header.php';
         document.getElementById('language').addEventListener('change', filterResources);
         document.getElementById('ministry').addEventListener('change', filterResources);
         document.getElementById('loadMoreButton').addEventListener('click', loadMoreResources);
+
+        function toggleDescription(btn) {
+            const p = btn.previousElementSibling;
+            const expanded = p.classList.toggle('expanded');
+            btn.classList.toggle('expanded', expanded);
+        }
+
+        function initReadMoreButtons() {
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.card-description').forEach(p => {
+                    const btn = p.nextElementSibling;
+                    if (btn && btn.classList.contains('read-more-btn')) {
+                        if (p.scrollHeight > p.clientHeight) {
+                            btn.classList.add('visible');
+                        } else {
+                            btn.classList.remove('visible');
+                        }
+                    }
+                });
+            });
+        }
 
         // Load resources on page load
         loadResources();

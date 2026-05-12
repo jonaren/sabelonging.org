@@ -4,26 +4,7 @@ $meta_description = 'Discover and explore our collection of resources';
 include 'includes/header.php';
 ?>
 
- <div class="container-fluid mb-5">
-       <div class="row mb-5">
-        <div class="col-md-3">  <img src="https://sabelonging.org/images/newlogo.png" style="width: 100%;"></div>
-         <div class="col-md-9"><header class="mb-5">
-          
-            <h5 class="display-6 main-header mb-3">An Online Resource for Territorial Priorities</h5>
-            <p class="lead subtitle">A curated collection of tools designed to equip and inspire leaders, nurture spiritual life, and empower young people. Whether you’re developing leadership capacity, deepening faith, or investing in the next generation, these resources are here to support you in mission, ministry, and service.</p>
-        <p class="subtitle">View all below, search by term, category, resource formats and more, or use the buttons below to limit your view to the desired resource format.</p>
-            <a class="btn btn-primary mb-3" href="https://sabelonging.org/leadership-development.php">Leadership Development</a> <a class="btn btn-primary mb-3" style="background-color: #9a323f !important; border-color: #5c0a10 !important" href="https://sabelonging.org/spiritual-life.php">Spiritual Life</a> <a class="btn btn-primary mb-3" style="background-color: #ddcc3b !important; border-color: #c0a30e  !important" href="https://sabelonging.org/youth.php">Youth</a>
-        
-        </header></div>
-       </div>
-            </div>
-
-        <div class="container">
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-  <strong>Disclaimer:</strong> The resources offered on this site have been prayerfully and thoughtfully reviewed. While aligned with Salvation Army doctrine and values, some materials may reflect theological differences not specifically identified. We encourage users to engage with discernment, guided by Scripture and trusted spiritual leadership. Inclusion does not imply full endorsement of all views.
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-        </div>
+<?php include ‘includes/banner.php’; ?>
 
             <div class="container">
         <!-- Filters -->
@@ -73,12 +54,6 @@ include 'includes/header.php';
             <p class="mt-3 text-muted">Loading resources...</p>
         </div>
 
-        <!-- Disclaimer -->
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-  <strong>Disclaimer:</strong> The resources offered on this site have been prayerfully and thoughtfully reviewed. While aligned with Salvation Army doctrine and values, some materials may reflect theological differences not specifically identified. We encourage users to engage with discernment, guided by Scripture and trusted spiritual leadership. Inclusion does not imply full endorsement of all views.
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-
         <!-- Resources Grid -->
         <div class="row g-4" id="resourcesGrid"></div>
 
@@ -104,14 +79,14 @@ include 'includes/header.php';
 
         // Placeholder images for when ThumbnailImage is empty
         const placeholderImages = [
-            'https://sabelonging.org/images/tn-1.jpg',
-            'https://sabelonging.org/images/tn-2.jpg',
-            'https://sabelonging.org/images/tn-3.jpg',
-            'https://sabelonging.org/images/tn-4.jpg',
-            'https://sabelonging.org/images/tn-5.jpg',
-            'https://sabelonging.org/images/tn-6.jpg',
-            'https://sabelonging.org/images/tn-7.jpg',
-            'https://sabelonging.org/images/tn-8.jpg'
+            '/images/tn-1.jpg',
+            '/images/tn-2.jpg',
+            '/images/tn-3.jpg',
+            '/images/tn-4.jpg',
+            '/images/tn-5.jpg',
+            '/images/tn-6.jpg',
+            '/images/tn-7.jpg',
+            '/images/tn-8.jpg'
         ];
 
         // Resource type icons mapping (Font Awesome icons)
@@ -264,7 +239,7 @@ include 'includes/header.php';
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">${resource.ResourceName}</h5>
                                 <p class="card-text card-description">${resource.Description}</p>
-                                <button class="read-more-btn" onclick="toggleDescription(this)">Read more</button>
+                                <button class="read-more-btn" onclick="toggleDescription(this)"><i class="fas fa-chevron-down"></i></button>
                                 ${resource.ButtonLink ? `<a href="${resource.ButtonLink}" target="${target}" ${rel ? `rel="${rel}"` : ''} class="btn btn-primary mt-auto">View Resource</a>` : ''}
                             </div>
                         </div>
@@ -279,6 +254,7 @@ include 'includes/header.php';
             }
 
             displayedCount = endIndex;
+            initReadMoreButtons();
 
             // Update pagination info and controls
             if (filteredResources.length > resourcesPerPage) {
@@ -312,7 +288,22 @@ include 'includes/header.php';
         function toggleDescription(btn) {
             const p = btn.previousElementSibling;
             const expanded = p.classList.toggle('expanded');
-            btn.textContent = expanded ? 'Read less' : 'Read more';
+            btn.classList.toggle('expanded', expanded);
+        }
+
+        function initReadMoreButtons() {
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.card-description').forEach(p => {
+                    const btn = p.nextElementSibling;
+                    if (btn && btn.classList.contains('read-more-btn')) {
+                        if (p.scrollHeight > p.clientHeight) {
+                            btn.classList.add('visible');
+                        } else {
+                            btn.classList.remove('visible');
+                        }
+                    }
+                });
+            });
         }
 
         // Load resources on page load
