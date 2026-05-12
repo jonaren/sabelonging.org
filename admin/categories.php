@@ -224,7 +224,7 @@ if (isset($_GET['edit'])) {
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="resource-types.php">
-                                <i class="fas fa-list"></i> Resource Types
+                                <i class="fas fa-list"></i> Resource Formats
                             </a>
                         </li>
                         <li class="nav-item">

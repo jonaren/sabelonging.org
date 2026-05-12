@@ -11,7 +11,7 @@ include 'includes/header.php';
           
             <h5 class="display-6 main-header mb-3">An Online Resource for Territorial Priorities</h5>
             <p class="lead subtitle">A curated collection of tools designed to equip and inspire leaders, nurture spiritual life, and empower young people. Whether you’re developing leadership capacity, deepening faith, or investing in the next generation, these resources are here to support you in mission, ministry, and service.</p>
-        <p class="subtitle">View all below, search by term, category, resource types and more, or use the buttons below to limit your view to the desired resource type.</p>
+        <p class="subtitle">View all below, search by term, category, resource formats and more, or use the buttons below to limit your view to the desired resource format.</p>
             <a class="btn btn-primary mb-3" href="https://sabelonging.org/leadership-development.php">Leadership Development</a> <a class="btn btn-primary mb-3" style="background-color: #9a323f !important; border-color: #5c0a10 !important" href="https://sabelonging.org/spiritual-life.php">Spiritual Life</a> <a class="btn btn-primary mb-3" style="background-color: #ddcc3b !important; border-color: #c0a30e  !important" href="https://sabelonging.org/youth.php">Youth</a>
         
         </header></div>
@@ -35,7 +35,7 @@ include 'includes/header.php';
                         <input type="text" class="form-control" id="search" placeholder="Search by name, description, or keywords...">
                     </div>
                     <div class="col-md-2">
-                        <label for="resourceType" class="form-label">Resource Type</label>
+                        <label for="resourceType" class="form-label">Resource Format</label>
                         <select class="form-select" id="resourceType">
                             <option value="">All Types</option>
                         </select>
@@ -256,14 +256,15 @@ include 'includes/header.php';
                             <div class="card-img-container">
                                 <img src="${thumbnailSrc}" alt="${resource.ResourceName}" class="card-img-top" onerror="this.src='${getRandomPlaceholder()}'">
                                 <div class="card-img-overlay">
-                                    ${resource.ResourceType ? `<span class="badge tag overlay-tag tag-resource-type">${icon} ${resource.ResourceType}</span>` : ''}
                                     ${(resource.Categories || []).map(cat => `<span class="badge tag overlay-tag tag-category"><i class="fas fa-tag"></i> ${cat}</span>`).join('')}
                                     ${resource.Ministry ? `<span class="badge tag overlay-tag tag-ministry"><i class="fas fa-church"></i> ${resource.Ministry}</span>` : ''}
+                                    ${resource.ResourceType ? `<span class="badge tag overlay-tag tag-resource-type">${icon} ${resource.ResourceType}</span>` : ''}
                                 </div>
                             </div>
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">${resource.ResourceName}</h5>
-                                <p class="card-text flex-grow-1">${resource.Description}</p>
+                                <p class="card-text card-description">${resource.Description}</p>
+                                <button class="read-more-btn" onclick="toggleDescription(this)">Read more</button>
                                 ${resource.ButtonLink ? `<a href="${resource.ButtonLink}" target="${target}" ${rel ? `rel="${rel}"` : ''} class="btn btn-primary mt-auto">View Resource</a>` : ''}
                             </div>
                         </div>
@@ -307,6 +308,12 @@ include 'includes/header.php';
         document.getElementById('language').addEventListener('change', filterResources);
         document.getElementById('ministry').addEventListener('change', filterResources);
         document.getElementById('loadMoreButton').addEventListener('click', loadMoreResources);
+
+        function toggleDescription(btn) {
+            const p = btn.previousElementSibling;
+            const expanded = p.classList.toggle('expanded');
+            btn.textContent = expanded ? 'Read less' : 'Read more';
+        }
 
         // Load resources on page load
         loadResources();

@@ -20,7 +20,7 @@ include 'includes/header.php';
                         <input type="text" class="form-control" id="search" placeholder="Search by name, description, or keywords...">
                     </div>
                     <div class="col-md-3">
-                        <label for="resourceType" class="form-label">Resource Type</label>
+                        <label for="resourceType" class="form-label">Resource Format</label>
                         <select class="form-select" id="resourceType">
                             <option value="">All Types</option>
                         </select>

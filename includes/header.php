@@ -136,6 +136,34 @@ require_once __DIR__ . '/settings.php';
             line-height: 1.5;
         }
 
+        .card-description {
+            display: -webkit-box;
+            -webkit-line-clamp: 5;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card-description.expanded {
+            display: block;
+            -webkit-line-clamp: unset;
+        }
+
+        .read-more-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #1d486b;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 4px;
+        }
+
+        .read-more-btn:hover {
+            color: #102a41;
+        }
+
         .tag {
             display: inline-flex;
             align-items: center;
@@ -513,11 +541,11 @@ require_once __DIR__ . '/settings.php';
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="<?= htmlspecialchars(get_setting('nav_link_1_url', '/resources.html')) ?>">
+                        <a class="nav-link active" href="<?= htmlspecialchars(get_setting('nav_link_1_url', '/')) ?>">
                             <i class="<?= htmlspecialchars(get_setting('nav_link_1_icon', 'fas fa-home')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_1_text', 'Resources')) ?>
                         </a>
                     </li>
-                    <?php if (get_setting('nav_link_2_text') || get_setting('nav_link_3_text')): ?>
+                    <?php if (get_setting('nav_link_2_text') || get_setting('nav_link_3_text') || get_setting('nav_link_4_text')): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-globe"></i> Other Resources
@@ -534,6 +562,13 @@ require_once __DIR__ . '/settings.php';
                             <li>
                                 <a class="dropdown-item" href="<?= htmlspecialchars(get_setting('nav_link_3_url')) ?>" <?= get_setting('nav_link_3_external') == '1' ? 'target="_blank"' : '' ?>>
                                     <i class="<?= htmlspecialchars(get_setting('nav_link_3_icon')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_3_text')) ?>
+                                </a>
+                            </li>
+                            <?php endif; ?>
+                            <?php if (get_setting('nav_link_4_text')): ?>
+                            <li>
+                                <a class="dropdown-item" href="<?= htmlspecialchars(get_setting('nav_link_4_url')) ?>" <?= get_setting('nav_link_4_external') == '1' ? 'target="_blank"' : '' ?>>
+                                    <i class="<?= htmlspecialchars(get_setting('nav_link_4_icon')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_4_text')) ?>
                                 </a>
                             </li>
                             <?php endif; ?>

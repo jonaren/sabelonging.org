@@ -239,7 +239,7 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries ORDER BY na
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="resource-types.php">
-                                <i class="fas fa-list"></i> Resource Types
+                                <i class="fas fa-list"></i> Resource Formats
                             </a>
                         </li>
                         <li class="nav-item">
@@ -359,7 +359,7 @@ $ministries = $resources_pdo->query("SELECT id, name FROM ministries ORDER BY na
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="mb-3">
-                                        <label for="resource_type_id" class="form-label">Resource Type *</label>
+                                        <label for="resource_type_id" class="form-label">Resource Format *</label>
                                         <select class="form-select" id="resource_type_id" name="resource_type_id" required>
                                             <option value="">Select Type</option>
                                             <?php foreach ($resource_types as $type): ?>

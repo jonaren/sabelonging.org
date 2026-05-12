@@ -191,7 +191,7 @@ if (!isset($_SESSION['csrf_token'])) {
                         </li>
                         <li class="nav-item">
                             <a class="nav-link <?= $current_page === 'resource-types' ? 'active' : '' ?>" href="resource-types.php">
-                                <i class="fas fa-list"></i> Resource Types
+                                <i class="fas fa-list"></i> Resource Formats
                             </a>
                         </li>
                         <li class="nav-item">

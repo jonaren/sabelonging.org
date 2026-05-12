@@ -86,7 +86,7 @@ $page_title = 'Belonging Resources';
          <div class="col-md-9"><header class="mb-5">
             <h5 class="display-6 main-header mb-3">An Online Resource for Territorial Priorities</h5>
             <p class="lead subtitle">A curated collection of tools designed to equip and inspire leaders, nurture spiritual life, and empower young people. Whether you're developing leadership capacity, deepening faith, or investing in the next generation, these resources are here to support you in mission, ministry, and service.</p>
-            <p class="subtitle">View all below, search by term, category, resource types and more, or use the buttons below to limit your view to the desired resource type.</p>
+            <p class="subtitle">View all below, search by term, category, resource formats and more, or use the buttons below to limit your view to the desired resource format.</p>
             <a class="btn btn-primary mb-3" href="https://sabelonging.org/leadership-development.php">Leadership Development</a> <a class="btn btn-primary mb-3" style="background-color: #9a323f !important; border-color: #5c0a10 !important" href="https://sabelonging.org/spiritual-life.php">Spiritual Life</a> <a class="btn btn-primary mb-3" style="background-color: #ddcc3b !important; border-color: #c0a30e !important" href="https://sabelonging.org/youth.php">Youth</a>
         </header></div>
        </div>
@@ -118,7 +118,7 @@ $page_title = 'Belonging Resources';
                         <input type="text" class="form-control" id="search" placeholder="Search by name, description, or keywords...">
                     </div>
                     <div class="col-md-2">
-                        <label for="resourceType" class="form-label">Resource Type</label>
+                        <label for="resourceType" class="form-label">Resource Format</label>
                         <select class="form-select" id="resourceType">
                             <option value="">All Types</option>
                             <?php foreach ($resource_types as $type): ?>
@@ -305,7 +305,8 @@ $page_title = 'Belonging Resources';
                             </div>
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">${resource.resource_name}</h5>
-                                <p class="card-text flex-grow-1">${resource.description}</p>
+                                <p class="card-text card-description">${resource.description}</p>
+                                <button class="read-more-btn" onclick="toggleDescription(this)">Read more</button>
                                 <a href="${resourceLink}" target="${linkTarget}" class="btn btn-primary mt-auto">View Resource</a>
                             </div>
                         </div>
@@ -349,6 +350,12 @@ $page_title = 'Belonging Resources';
         document.getElementById('language').addEventListener('change', filterResources);
         document.getElementById('ministry').addEventListener('change', filterResources);
         document.getElementById('loadMoreButton').addEventListener('click', loadMoreResources);
+
+        function toggleDescription(btn) {
+            const p = btn.previousElementSibling;
+            const expanded = p.classList.toggle('expanded');
+            btn.textContent = expanded ? 'Read less' : 'Read more';
+        }
 
         // Initialize resources on page load
         filteredResources = [...allResources];

@@ -18,7 +18,7 @@ try {
     $stmt = $resources_pdo->query("SELECT COUNT(*) as total FROM categories");
     $stats['total_categories'] = $stmt->fetch()['total'];
 
-    // Total resource types
+    // Total resource formats
     $stmt = $resources_pdo->query("SELECT COUNT(*) as total FROM resource_types");
     $stats['total_types'] = $stmt->fetch()['total'];
 
@@ -197,7 +197,7 @@ try {
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="resource-types.php">
-                                <i class="fas fa-list"></i> Resource Types
+                                <i class="fas fa-list"></i> Resource Formats
                             </a>
                         </li>
                         <li class="nav-item">
@@ -325,7 +325,7 @@ try {
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <h3 class="mb-1"><?= $stats['total_types'] ?></h3>
-                                        <p class="card-text mb-0">Resource Types</p>
+                                        <p class="card-text mb-0">Resource Formats</p>
                                     </div>
                                     <div class="stat-icon">
                                         <i class="fas fa-list"></i>

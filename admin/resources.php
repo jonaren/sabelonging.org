@@ -156,7 +156,7 @@ $stmt = $resources_pdo->prepare($query);
 $stmt->execute($params);
 $resources = $stmt->fetchAll();
 
-// Get resource types for filter
+// Get resource formats for filter
 $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHERE is_active = 1 ORDER BY name")->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -265,7 +265,7 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="resource-types.php">
-                                <i class="fas fa-list"></i> Resource Types
+                                <i class="fas fa-list"></i> Resource Formats
                             </a>
                         </li>
                         <li class="nav-item">
@@ -334,7 +334,7 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
                                        placeholder="Search by name, description...">
                             </div>
                             <div class="col-md-3">
-                                <label for="resource_type" class="form-label">Resource Type</label>
+                                <label for="resource_type" class="form-label">Resource Format</label>
                                 <select class="form-select" id="resource_type" name="resource_type">
                                     <option value="">All Types</option>
                                     <?php foreach ($resource_types as $type): ?>

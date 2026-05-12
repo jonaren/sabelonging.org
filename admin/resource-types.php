@@ -20,7 +20,7 @@ if ($_POST) {
                 if ($e->getCode() == 23000) {
                     flashMessage('error', 'Resource type name already exists');
                 } else {
-                    flashMessage('error', 'Error adding resource type: ' . $e->getMessage());
+                    flashMessage('error', 'Error adding resource format: ' . $e->getMessage());
                 }
             }
         } else {
@@ -43,7 +43,7 @@ if ($_POST) {
                 if ($e->getCode() == 23000) {
                     flashMessage('error', 'Resource type name already exists');
                 } else {
-                    flashMessage('error', 'Error updating resource type: ' . $e->getMessage());
+                    flashMessage('error', 'Error updating resource format: ' . $e->getMessage());
                 }
             }
         } else {
@@ -60,27 +60,27 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
     $id = (int)$_GET['id'];
 
     try {
-        // Check if resource type is being used
+        // Check if resource format is being used
         $stmt = $resources_pdo->prepare("SELECT COUNT(*) as count FROM resources WHERE resource_type_id = ?");
         $stmt->execute([$id]);
         $usage = $stmt->fetch();
 
         if ($usage['count'] > 0) {
-            flashMessage('error', 'Cannot delete resource type. It is being used by ' . $usage['count'] . ' resource(s).');
+            flashMessage('error', 'Cannot delete resource format. It is being used by ' . $usage['count'] . ' resource(s).');
         } else {
             $stmt = $resources_pdo->prepare("DELETE FROM resource_types WHERE id = ?");
             $stmt->execute([$id]);
             flashMessage('success', 'Resource type deleted successfully');
         }
     } catch (Exception $e) {
-        flashMessage('error', 'Error deleting resource type: ' . $e->getMessage());
+        flashMessage('error', 'Error deleting resource format: ' . $e->getMessage());
     }
 
     header('Location: resource-types.php');
     exit;
 }
 
-// Get all resource types with resource counts
+// Get all resource formats with resource counts
 $stmt = $resources_pdo->query("
     SELECT rt.*, COUNT(r.id) as resource_count
     FROM resource_types rt
@@ -90,7 +90,7 @@ $stmt = $resources_pdo->query("
 ");
 $resourceTypes = $stmt->fetchAll();
 
-// Get resource type for editing
+// Get resource format for editing
 $editResourceType = null;
 if (isset($_GET['edit'])) {
     $editId = (int)$_GET['edit'];
@@ -104,7 +104,7 @@ if (isset($_GET['edit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resource Types - Admin Panel</title>
+    <title>Resource Formats - Admin Panel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -211,7 +211,7 @@ if (isset($_GET['edit'])) {
                         </li>
                         <li class="nav-item">
                             <a class="nav-link active" href="resource-types.php">
-                                <i class="fas fa-list"></i> Resource Types
+                                <i class="fas fa-list"></i> Resource Formats
                             </a>
                         </li>
                         <li class="nav-item">
@@ -255,7 +255,7 @@ if (isset($_GET['edit'])) {
                 <div class="pt-3 pb-2 mb-3 border-bottom">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h1 class="h2">Resource Types</h1>
+                            <h1 class="h2">Resource Formats</h1>
                             <p class="text-muted">Define types of resources (Article, Video, Book, etc.)</p>
                         </div>
                         <div class="stats-card">
@@ -283,7 +283,7 @@ if (isset($_GET['edit'])) {
                             <div class="form-card-header">
                                 <h5 class="mb-0">
                                     <i class="fas fa-<?= $editResourceType ? 'edit' : 'plus' ?>"></i>
-                                    <?= $editResourceType ? 'Edit Resource Type' : 'Add New Resource Type' ?>
+                                    <?= $editResourceType ? 'Edit Resource Format' : 'Add New Resource Format' ?>
                                 </h5>
                             </div>
                             <div class="card-body p-4">
@@ -328,12 +328,12 @@ if (isset($_GET['edit'])) {
                         </div>
                     </div>
 
-                    <!-- Resource Types List -->
+                    <!-- Resource Formats List -->
                     <div class="col-md-8">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">
-                                    <i class="fas fa-list"></i> All Resource Types (<?= count($resourceTypes) ?>)
+                                    <i class="fas fa-list"></i> All Resource Formats (<?= count($resourceTypes) ?>)
                                 </h5>
                             </div>
                             <div class="card-body p-0">
@@ -341,8 +341,8 @@ if (isset($_GET['edit'])) {
                                     <div class="text-center py-5">
                                         <div class="text-muted">
                                             <i class="fas fa-list fa-4x mb-3"></i>
-                                            <h4>No resource types yet</h4>
-                                            <p>Create your first resource type.</p>
+                                            <h4>No resource formats yet</h4>
+                                            <p>Create your first resource format.</p>
                                         </div>
                                     </div>
                                 <?php else: ?>
