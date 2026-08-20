@@ -271,9 +271,13 @@ $page_title = 'Belonging Resources';
                 const icon = resourceTypeIcons[resource.resource_type_name] || resourceTypeIcons.default;
                 const thumbnailSrc = resource.thumbnail_image || getRandomPlaceholder();
                 
-                // Determine the link - either external button_link or internal resource page
-                const resourceLink = resource.button_link || `resource.php?slug=${encodeURIComponent(resource.slug)}`;
-                const linkTarget = resource.button_link ? '_blank' : '_self';
+                // Mirror API priority: external_url > button_link > internal resource page
+                const resolvedLink = (resource.is_external_resource && resource.external_url)
+                    ? resource.external_url
+                    : (resource.button_link || null);
+                const resourceLink = resolvedLink || `resource.php?slug=${encodeURIComponent(resource.slug)}`;
+                const linkTarget = resolvedLink ? '_blank' : '_self';
+                const linkRel = resolvedLink ? 'rel="noopener noreferrer"' : '';
                 
                 return `
                     <div class="col-lg-4 col-md-6">
@@ -290,7 +294,7 @@ $page_title = 'Belonging Resources';
                                 <h5 class="card-title">${resource.resource_name}</h5>
                                 <p class="card-text card-description">${resource.description}</p>
                                 <button class="read-more-btn" onclick="toggleDescription(this)"><i class="fas fa-chevron-down"></i></button>
-                                <a href="${resourceLink}" target="${linkTarget}" class="btn btn-primary mt-auto">View Resource</a>
+                                <a href="${resourceLink}" target="${linkTarget}" ${linkRel} class="btn btn-primary mt-auto">View Resource</a>
                             </div>
                         </div>
                     </div>

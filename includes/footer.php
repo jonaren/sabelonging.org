@@ -3,10 +3,11 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <h5><?= htmlspecialchars(get_setting('footer_about_title', 'About SAbelonging')) ?></h5>
+                    <h5><?= htmlspecialchars(get_setting('footer_about_title', 'About SA Central Equip')) ?></h5>
                     <p class="text-white-50">
                         <?= htmlspecialchars(get_setting('footer_about_text', 'A comprehensive resource hub for The Salvation Army, providing materials, tools, and guidance for ministry and mission.')) ?>
                     </p>
+                    <!--
                     <div class="social-links mt-3">
                         <?php if (get_setting('social_facebook')): ?>
                         <a href="<?= htmlspecialchars(get_setting('social_facebook')) ?>" target="_blank" title="Facebook">
@@ -29,12 +30,13 @@
                         </a>
                         <?php endif; ?>
                     </div>
+                    -->
                 </div>
 
                 <div class="col-lg-2 col-md-6 mb-4">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="<?= htmlspecialchars(get_setting('nav_link_1_url', '/resources.html')) ?>"><i class="fas fa-chevron-right me-2"></i> <?= htmlspecialchars(get_setting('nav_link_1_text', 'Resources')) ?></a></li>
+                        <li class="mb-2"><a href="https://salarmycentral.org/" target="_blank"><i class="fas fa-chevron-right me-2"></i> Central Connection</a></li>
                         <?php if (get_setting('footer_contact_website')): ?>
                         <li class="mb-2"><a href="<?= htmlspecialchars(get_setting('footer_contact_website')) ?>" target="_blank"><i class="fas fa-chevron-right me-2"></i> Salvation Army</a></li>
                         <?php endif; ?>
@@ -77,12 +79,14 @@
             <div class="footer-bottom">
                 <p class="mb-0">
                     &copy; <?= date('Y') ?> <?= htmlspecialchars(get_setting('footer_copyright', 'The Salvation Army')) ?>. All rights reserved.
+                    <!--
                     <?php if (get_setting('footer_privacy_url')): ?>
                     | <a href="<?= htmlspecialchars(get_setting('footer_privacy_url')) ?>" target="_blank">Privacy Policy</a>
                     <?php endif; ?>
                     <?php if (get_setting('footer_terms_url')): ?>
                     | <a href="<?= htmlspecialchars(get_setting('footer_terms_url')) ?>" target="_blank">Terms of Use</a>
                     <?php endif; ?>
+                    -->
                 </p>
             </div>
         </div>

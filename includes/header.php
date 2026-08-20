@@ -553,7 +553,7 @@ require_once __DIR__ . '/settings.php';
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand" href="<?= htmlspecialchars(get_setting('nav_link_1_url', '/resources.html')) ?>">
+            <a class="navbar-brand" href="/">
                 <img style="height: 90px !important;" src="/images/newlogo.png" alt="<?= htmlspecialchars(get_setting('site_name', 'SAbelonging')) ?> Logo">
                 <span><?= htmlspecialchars(get_setting('site_name', 'SAbelonging')) ?></span>
             </a>

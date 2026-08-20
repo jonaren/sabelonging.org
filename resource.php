@@ -263,8 +263,8 @@ $og_type = 'article';
                                             <?= strtoupper($extension) ?>
                                         </small>
                                     </div>
-                                    <a href="<?= htmlspecialchars($file['file_path']) ?>"
-                                       class="btn btn-outline-primary btn-sm ms-2 flex-shrink-0" download>
+                                    <a href="/download.php?id=<?= (int)$file['id'] ?>"
+                                       class="btn btn-outline-primary btn-sm ms-2 flex-shrink-0">
                                         <i class="fas fa-download"></i>
                                     </a>
                                 </div>
