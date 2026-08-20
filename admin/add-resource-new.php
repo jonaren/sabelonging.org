@@ -125,6 +125,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resources_pdo->commit();
             if (isContentCreator()) {
                 flashMessage('warning', 'Resource submitted for Approval');
+                try {
+                    $submitter_name = $_SESSION['admin_full_name'] ?? $_SESSION['admin_username'] ?? 'A content creator';
+                    sendDraftNotification($resource_id, $resource_name, $submitter_name);
+                } catch (Exception $mail_e) {
+                    // Email failure should not block the user
+                }
             } else {
                 flashMessage('success', 'Resource created successfully');
             }

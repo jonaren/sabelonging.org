@@ -4,7 +4,7 @@ $meta_description = 'Discover and explore our collection of resources';
 include 'includes/header.php';
 ?>
 
-<?php include ‘includes/banner.php’; ?>
+<?php include 'includes/banner.php'; ?>
 
             <div class="container">
         <!-- Filters -->
