@@ -574,7 +574,7 @@ require_once __DIR__ . '/settings.php';
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <?php $is_websites_page = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'websites.php'; ?>
-                        <a class="nav-link<?= $is_websites_page ? '' : ' active' ?>" href="<?= htmlspecialchars(get_setting('nav_link_1_url') ?: '/') ?>">
+                        <a class="nav-link<?= $is_websites_page ? '' : ' active' ?>" href="<?= htmlspecialchars(get_setting('nav_link_1_url', '/')) ?>">
                             <i class="<?= htmlspecialchars(get_setting('nav_link_1_icon', 'fas fa-home')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_1_text', 'Resources')) ?>
                         </a>
                     </li>
