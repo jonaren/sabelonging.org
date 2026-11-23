@@ -26,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $url = normalizeWebsiteUrl($_POST['url'] ?? '');
             $description = sanitizeInput($_POST['description'] ?? '');
             $button_label = sanitizeInput($_POST['button_label'] ?? '') ?: null;
-            $display_order = (int)($_POST['display_order'] ?? 0);
             $is_active = isset($_POST['is_active']) ? 1 : 0;
             $tag_ids = array_merge($_POST['tags_type'] ?? [], $_POST['tags_owner'] ?? []);
 
@@ -41,11 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $resources_pdo->prepare("SELECT url FROM websites WHERE id = ?");
                 $stmt->execute([$id]);
                 $old_url = $stmt->fetchColumn();
-                $resources_pdo->prepare("UPDATE websites SET name=?, url=?, description=?, button_label=?, display_order=?, is_active=? WHERE id=?")
-                    ->execute([$name, $url, $description, $button_label, $display_order, $is_active, $id]);
+                $resources_pdo->prepare("UPDATE websites SET name=?, url=?, description=?, button_label=?, is_active=? WHERE id=?")
+                    ->execute([$name, $url, $description, $button_label, $is_active, $id]);
             } else {
+                // New sites go to the end of the list; reorder by dragging in the list
+                $next_order = (int)$resources_pdo->query("SELECT COALESCE(MAX(display_order), 0) + 1 FROM websites")->fetchColumn();
                 $resources_pdo->prepare("INSERT INTO websites (name, url, description, button_label, display_order, is_active, created_by) VALUES (?,?,?,?,?,?,?)")
-                    ->execute([$name, $url, $description, $button_label, $display_order, $is_active, $_SESSION['admin_id'] ?? null]);
+                    ->execute([$name, $url, $description, $button_label, $next_order, $is_active, $_SESSION['admin_id'] ?? null]);
                 $id = (int)$resources_pdo->lastInsertId();
             }
             setWebsiteTags($resources_pdo, $id, $tag_ids);
@@ -174,6 +175,10 @@ $active_count = count(array_filter($sites, fn($s) => $s['is_active']));
         .tag-owner { background: #f6ecee; color: #7a2a35; border: 1px solid #e5c9ce; }
         .tag-checks { max-height: 180px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 0.5rem 0.75rem; background: #fff; }
         .site-row.inactive td { opacity: 0.55; }
+        .drag-handle { width: 32px; cursor: grab; color: #adb5bd; text-align: center; touch-action: none; }
+        .drag-handle:hover { color: var(--primary-blue); }
+        .site-row.sortable-chosen { background: #eef4fa; }
+        .site-row.sortable-ghost { opacity: 0.35; }
         .preview-shot { width: 100%; aspect-ratio: 16/10; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid #dee2e6; }
     </style>
 </head>
@@ -289,16 +294,9 @@ $active_count = count(array_filter($sites, fn($s) => $s['is_active']));
                                 </div>
                                 <?php endforeach; ?>
 
-                                <div class="row g-3 mb-3">
-                                    <div class="col-sm-7">
-                                        <label class="form-label" for="button_label">Button text</label>
-                                        <input type="text" class="form-control" id="button_label" name="button_label" maxlength="100" placeholder="Visit Website" value="<?= htmlspecialchars($edit['button_label'] ?? '') ?>">
-                                    </div>
-                                    <div class="col-sm-5">
-                                        <label class="form-label" for="display_order">Sort order</label>
-                                        <input type="number" class="form-control" id="display_order" name="display_order" value="<?= (int)($edit['display_order'] ?? 0) ?>">
-                                        <div class="form-text">Lower shows first.</div>
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="button_label">Button text</label>
+                                    <input type="text" class="form-control" id="button_label" name="button_label" maxlength="100" placeholder="Visit Website" value="<?= htmlspecialchars($edit['button_label'] ?? '') ?>">
                                 </div>
 
                                 <div class="mb-3">
@@ -337,6 +335,7 @@ $active_count = count(array_filter($sites, fn($s) => $s['is_active']));
                     <div class="card form-card">
                         <div class="form-card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="fas fa-list"></i> Indexed Websites (<?= count($sites) ?>)</h5>
+                            <span class="small" id="orderStatus"><?= count($sites) > 1 ? '<i class="fas fa-grip-vertical"></i> Drag to reorder' : '' ?></span>
                         </div>
                         <div class="card-body p-0">
                             <?php if (!$sites): ?>
@@ -344,9 +343,10 @@ $active_count = count(array_filter($sites, fn($s) => $s['is_active']));
                             <?php else: ?>
                             <div class="table-responsive">
                                 <table class="table align-middle mb-0">
-                                    <tbody>
+                                    <tbody id="siteList">
                                     <?php foreach ($sites as $s): ?>
                                         <tr class="site-row <?= $s['is_active'] ? '' : 'inactive' ?>" data-site-id="<?= $s['id'] ?>">
+                                            <td class="drag-handle" title="Drag to reorder" aria-label="Drag to reorder"><i class="fas fa-grip-vertical"></i></td>
                                             <td style="width:136px">
                                                 <div class="thumb">
                                                     <?php if ($s['screenshot_url']): ?>
@@ -461,6 +461,7 @@ $active_count = count(array_filter($sites, fn($s) => $s['is_active']));
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script>
 (() => {
     const csrf = <?= json_encode($csrf) ?>;
@@ -492,6 +493,24 @@ $active_count = count(array_filter($sites, fn($s) => $s['is_active']));
     }
     document.querySelectorAll('.capture-btn').forEach((b) => b.addEventListener('click', () => capture(b.dataset.id)));
     <?php if ($capture_id && $has_api_key): ?>capture(<?= $capture_id ?>);<?php endif; ?>
+
+    // Drag-and-drop ordering — saves immediately; the public page uses the same order
+    const list = document.getElementById('siteList');
+    const orderStatus = document.getElementById('orderStatus');
+    if (list && window.Sortable) {
+        Sortable.create(list, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: (e) => {
+                if (e.oldIndex === e.newIndex) return;
+                const ids = [...list.querySelectorAll('tr[data-site-id]')].map((r) => r.dataset.siteId);
+                orderStatus.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving order…';
+                post({ action: 'reorder', ids: ids.join(',') })
+                    .then(() => { orderStatus.innerHTML = '<i class="fas fa-check"></i> Order saved'; })
+                    .catch((err) => { orderStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + err.message + ' — reload and try again'; });
+            },
+        });
+    }
 
     // Auto-fill title + description from the site
     const fetchBtn = document.getElementById('fetchMeta');

@@ -52,6 +52,16 @@ try {
         respond(200, ['success' => true, 'screenshot_url' => $shot]);
     }
 
+    if ($action === 'reorder') {
+        $ids = array_values(array_filter(array_map('intval', explode(',', $_POST['ids'] ?? ''))));
+        if (!$ids) respond(400, ['success' => false, 'error' => 'Nothing to reorder.']);
+        $stmt = $resources_pdo->prepare("UPDATE websites SET display_order = ? WHERE id = ?");
+        $resources_pdo->beginTransaction();
+        foreach ($ids as $i => $id) $stmt->execute([$i + 1, $id]);
+        $resources_pdo->commit();
+        respond(200, ['success' => true]);
+    }
+
     respond(400, ['success' => false, 'error' => 'Unknown action.']);
 } catch (Exception $e) {
     respond(500, ['success' => false, 'error' => $e->getMessage()]);
