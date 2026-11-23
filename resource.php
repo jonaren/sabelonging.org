@@ -132,9 +132,13 @@ include 'includes/header.php';
                 <dl class="facts">
                     <?php if ($my_priorities): ?>
                     <dt>Priority</dt>
-                    <dd><?php foreach ($my_priorities as $p): ?><span class="prio"><span class="swatch <?= $priority_class[$p] ?>" aria-hidden="true"></span><?= htmlspecialchars($p) ?></span><?php endforeach; ?></dd>
+                    <dd class="tags"><?php foreach ($my_priorities as $p): ?><a class="tag <?= $priority_class[$p] ?>" href="/?priority=<?= urlencode($p) ?>#library"><?= htmlspecialchars($p) ?></a><?php endforeach; ?></dd>
                     <?php endif; ?>
-                    <?php if ($resource['ministry_name']): ?><dt>Ministry</dt><dd><?= htmlspecialchars($resource['ministry_name']) ?></dd><?php endif; ?>
+                    <?php if ($resource['ministry_name']):
+                        $m = $resource['ministry_name'];
+                        $m_class = preg_match('/spiritual/i', $m) ? 'spirit' : (preg_match('/youth|teen|child|young/i', $m) ? 'youth' : (preg_match('/leader|officer|training/i', $m) ? 'lead' : 'neutral')); ?>
+                    <dt>Ministry</dt><dd class="tags"><a class="tag ministry <?= $m_class ?>" href="/?ministry=<?= urlencode($m) ?>#library"><?= htmlspecialchars($m) ?></a></dd>
+                    <?php endif; ?>
                     <?php if ($resource['language_name']): ?><dt>Language</dt><dd><?= htmlspecialchars($resource['language_name']) ?></dd><?php endif; ?>
                     <dt>Added</dt><dd><?= date('F j, Y', strtotime($resource['created_at'])) ?></dd>
                 </dl>
