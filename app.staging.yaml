@@ -1,0 +1,14 @@
+# Preproduction (staging) service.
+# Deploy from the staging branch with:
+#   gcloud app deploy app.staging.yaml --project sacentralequip
+# URL: https://staging-dot-sacentralequip.uc.r.appspot.com
+# NOTE: shares the production database (includes/settings.php).
+service: staging
+runtime: php83
+
+handlers:
+  - url: /images
+    static_dir: images
+
+  - url: .*
+    script: auto
