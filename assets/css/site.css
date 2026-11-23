@@ -179,7 +179,7 @@ a:hover { color: var(--link); text-decoration-thickness: 2px; }
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 .theme-switching::view-transition-new(root) { animation: theme-reveal .6s var(--ease-out); }
 /* Cards carry their own transition names for filtering; during a theme switch they join the page-wide reveal */
-.theme-switching .rcard { view-transition-name: none !important; }
+.theme-switching .rcard-wrap { view-transition-name: none !important; }
 @keyframes theme-reveal { from { clip-path: circle(0 at var(--tx, 100%) var(--ty, 0)); } to { clip-path: circle(var(--tr, 150%) at var(--tx, 100%) var(--ty, 0)); } }
 
 /* ---------- Home hero ---------- */
@@ -417,7 +417,10 @@ a:hover { color: var(--link); text-decoration-thickness: 2px; }
     overflow: hidden; color: inherit; text-decoration: none;
     transition: border-color .2s ease, transform .3s var(--ease-out), box-shadow .3s ease;
 }
-.rcard:hover { color: inherit; text-decoration: none; border-color: var(--line-strong); transform: translateY(-4px); box-shadow: var(--shadow-lift); }
+.rcard-wrap { position: relative; display: flex; min-width: 0; transition: transform .3s var(--ease-out); }
+.rcard-wrap > .rcard { flex: 1; }
+.rcard-wrap:hover { transform: translateY(-4px); }
+.rcard:hover { color: inherit; text-decoration: none; border-color: var(--line-strong); box-shadow: var(--shadow-lift); }
 .rcard:focus-visible { outline-offset: 3px; }
 .rcard-media { position: relative; aspect-ratio: 16 / 10; background: var(--surface-2); overflow: hidden; }
 .rcard-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--ease-out); }
@@ -441,6 +444,56 @@ a:hover { color: var(--link); text-decoration-thickness: 2px; }
 .rcard-go i { font-size: 12px; transition: transform .25s var(--ease-spring); }
 .rcard:hover .rcard-go i { transform: translate(2px, -2px); }
 
+/* ---------- Saved (hearts) ---------- */
+:root { --heart: #e0314b; }
+[data-theme="dark"] { --heart: #ff5a72; }
+.heart {
+    position: absolute; z-index: 2; top: 12px; right: 12px;
+    width: 40px; height: 40px; display: grid; place-items: center;
+    border: 0; border-radius: 50%;
+    background: rgba(255, 255, 255, .92); color: #66748a;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .5);
+    font-size: 17px; transition: transform .2s var(--ease-spring), color .15s ease, background-color .15s ease;
+}
+.heart i { transition: transform .2s ease; }
+.heart:hover { transform: scale(1.08); color: var(--heart); }
+.heart[aria-pressed="true"] { color: #fff; background: var(--heart); }
+[data-theme="dark"] .heart:not([aria-pressed="true"]) { background: rgba(18, 31, 48, .85); color: #b7c3d2; }
+.heart-btn i { transition: color .15s ease; }
+.heart-btn[aria-pressed="true"] { border-color: var(--heart); color: var(--heart); }
+.heart-btn[aria-pressed="true"] i, .heart-btn:hover i { color: var(--heart); }
+@media (prefers-reduced-motion: no-preference) {
+    .is-popping i { animation: heart-pop .45s var(--ease-spring); }
+    .heart.is-popping::after {
+        content: ""; position: absolute; inset: -2px; border-radius: 50%;
+        border: 2px solid var(--heart); animation: heart-ring .5s var(--ease-out) forwards; pointer-events: none;
+    }
+    @keyframes heart-pop { 0% { transform: scale(1); } 35% { transform: scale(1.45); } 100% { transform: scale(1); } }
+    @keyframes heart-ring { from { opacity: .9; transform: scale(.8); } to { opacity: 0; transform: scale(1.7); } }
+}
+.saved-toggle {
+    height: 48px; display: inline-flex; align-items: center; gap: 8px; padding: 0 18px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+    font-weight: 600; font-size: 15px; color: var(--ink-2);
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.saved-toggle i { color: var(--heart); }
+.saved-toggle .n { min-width: 22px; padding: 0 6px; border-radius: 999px; background: var(--surface-2); font-size: 13px; font-variant-numeric: tabular-nums; text-align: center; }
+.saved-toggle:hover { border-color: var(--line-strong); color: var(--ink); }
+.saved-toggle[aria-pressed="true"] { background: var(--heart); border-color: var(--heart); color: #fff; }
+.saved-toggle[aria-pressed="true"] i { color: #fff; }
+.saved-toggle[aria-pressed="true"] .n { background: rgba(255, 255, 255, .22); }
+.toast-msg {
+    position: fixed; z-index: 1100; left: 50%; bottom: 24px;
+    transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+    padding: 12px 20px; border-radius: 999px; max-width: calc(100vw - 32px);
+    background: var(--ink); color: var(--canvas); font-weight: 600; font-size: 15px;
+    box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .5);
+    transition: opacity .25s ease, transform .35s var(--ease-spring);
+}
+.toast-msg.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
 /* Tags: color-coded by priority */
 .tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
 .tag {
@@ -462,7 +515,7 @@ a.tag:hover { color: var(--tag-ink); text-decoration: none; filter: brightness(.
 
 /* Cards entering (append, or browsers without View Transitions) */
 @media (prefers-reduced-motion: no-preference) {
-    .rcard.is-entering { animation: card-in .5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
+    .rcard-wrap.is-entering { animation: card-in .5s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
     @keyframes card-in { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: none; } }
     /* Filtering: cards glide to their new places */
     ::view-transition-group(*) { animation-duration: .45s; animation-timing-function: var(--ease-out); }

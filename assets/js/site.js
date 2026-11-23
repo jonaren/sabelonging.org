@@ -1,7 +1,76 @@
 /*
- * Site-wide behavior: light/dark theme toggle.
- * The initial theme is applied by an inline script in <head> (no flash); this adds the button.
+ * Site-wide behavior: saved (hearted) items, a small toast, and the light/dark theme toggle.
  */
+
+// ---------- Saved items ----------
+// Stored on this device only (localStorage), per kind: 'resources', 'websites'.
+window.SCESaved = (() => {
+    const key = (kind) => `sce:saved:${kind}`;
+    const listeners = new Set();
+
+    function get(kind) {
+        try { return new Set((JSON.parse(localStorage.getItem(key(kind)) || '[]')).map(String)); }
+        catch (e) { return new Set(); }
+    }
+    function set(kind, ids) {
+        try { localStorage.setItem(key(kind), JSON.stringify([...ids])); } catch (e) {}
+        listeners.forEach((fn) => fn(kind));
+    }
+    function toggle(kind, id) {
+        const ids = get(kind);
+        id = String(id);
+        const on = !ids.has(id);
+        on ? ids.add(id) : ids.delete(id);
+        set(kind, ids);
+        return on;
+    }
+    // Keep other open tabs in sync
+    window.addEventListener('storage', (e) => {
+        const m = e.key && e.key.match(/^sce:saved:(.+)$/);
+        if (m) listeners.forEach((fn) => fn(m[1]));
+    });
+    return { get, toggle, has: (kind, id) => get(kind).has(String(id)), onChange: (fn) => listeners.add(fn) };
+})();
+
+// ---------- Toast ----------
+window.SCEToast = (() => {
+    let el, timer;
+    return (message) => {
+        if (!el) {
+            el = document.createElement('div');
+            el.className = 'toast-msg';
+            el.setAttribute('role', 'status');
+            el.setAttribute('aria-live', 'polite');
+            document.body.appendChild(el);
+        }
+        el.textContent = message;
+        el.classList.add('is-visible');
+        clearTimeout(timer);
+        timer = setTimeout(() => el.classList.remove('is-visible'), 2600);
+    };
+})();
+
+// ---------- Heart buttons outside the library grid (e.g. the resource page) ----------
+(() => {
+    const sync = () => document.querySelectorAll('[data-save-kind][data-save-id]').forEach((b) => {
+        const on = window.SCESaved.has(b.dataset.saveKind, b.dataset.saveId);
+        b.setAttribute('aria-pressed', String(on));
+        const label = b.querySelector('.heart-label');
+        if (label) label.textContent = on ? 'Saved' : 'Save';
+    });
+    document.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-save-kind][data-save-id]');
+        if (!b) return;
+        const on = window.SCESaved.toggle(b.dataset.saveKind, b.dataset.saveId);
+        b.classList.remove('is-popping'); void b.offsetWidth; if (on) b.classList.add('is-popping');
+        window.SCEToast(on ? 'Saved. It will show first when you browse.' : 'Removed from saved.');
+    });
+    window.SCESaved.onChange(sync);
+    sync();
+})();
+
+// ---------- Theme ----------
+// The initial theme is applied by an inline script in <head> (no flash); this adds the toggle.
 (() => {
     const html = document.documentElement;
     const STORAGE_KEY = 'theme';
