@@ -47,6 +47,35 @@ try {
     .site-tag .label { font-weight: 400; opacity: .75; }
     .site-actions { margin-top: auto; padding-top: .5rem; }
 
+    /* Saved (hearts): stored on this device; saved sites sort first */
+    .site-heart {
+        flex: none; width: 28px; height: 28px; display: grid; place-items: center; margin: -4px -4px -4px 0;
+        border: 0; border-radius: 50%; background: transparent; color: #8a96a3; font-size: 14px;
+        transition: transform .2s cubic-bezier(.34, 1.4, .64, 1), color .15s ease, background-color .15s ease;
+    }
+    .site-heart:hover { color: #e0314b; background: rgba(224, 49, 75, .1); transform: scale(1.1); }
+    .site-heart[aria-pressed="true"] { color: #e0314b; }
+    @media (prefers-reduced-motion: no-preference) {
+        .site-heart.is-popping i { animation: site-heart-pop .45s cubic-bezier(.34, 1.4, .64, 1); }
+        @keyframes site-heart-pop { 35% { transform: scale(1.5); } }
+    }
+    .wsaved {
+        display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px;
+        border: 1px solid var(--line, #dbe1e8); border-radius: 999px; background: var(--surface, #fff);
+        font-weight: 600; font-size: 15px; color: var(--ink-2, #3c4b5e);
+    }
+    .wsaved i { color: #e0314b; }
+    .wsaved .n { min-width: 22px; padding: 0 6px; border-radius: 999px; background: var(--surface-2, #f2f4f7); font-size: 13px; text-align: center; }
+    .wsaved[aria-pressed="true"] { background: #e0314b; border-color: #e0314b; color: #fff; }
+    .wsaved[aria-pressed="true"] i { color: #fff; }
+    .wsaved[aria-pressed="true"] .n { background: rgba(255, 255, 255, .22); }
+    .wsaved-toast {
+        position: fixed; z-index: 1100; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+        padding: 12px 20px; border-radius: 999px; background: var(--ink, #13243a); color: var(--canvas, #fff); font-weight: 600;
+        box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .5); transition: opacity .25s ease, transform .35s cubic-bezier(.34, 1.4, .64, 1);
+    }
+    .wsaved-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
     /* Hero: navy band with a fanned stack of real site screenshots */
     .whero {
         position: relative; isolation: isolate; overflow: hidden;
@@ -154,19 +183,26 @@ try {
         </div>
     </div>
 
-    <p class="results-info text-muted mb-3" id="siteCount" aria-live="polite"><?= count($sites) ?> website<?= count($sites) === 1 ? '' : 's' ?></p>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <p class="results-info text-muted mb-0" id="siteCount" aria-live="polite"><?= count($sites) ?> website<?= count($sites) === 1 ? '' : 's' ?></p>
+        <button type="button" class="wsaved" id="sitesSaved" aria-pressed="false" hidden>
+            <i class="fas fa-heart" aria-hidden="true"></i> Saved <span class="n">0</span>
+        </button>
+    </div>
 
     <div class="site-grid mb-5" id="siteGrid">
         <?php foreach ($sites as $s):
             $address = websiteDisplayAddress($s['url']);
             $search = mb_strtolower($s['name'] . ' ' . $address . ' ' . $s['description'] . ' ' . implode(' ', array_merge(...array_values($s['tags']))));
         ?>
-        <article class="site-card"
+        <article class="site-card" data-id="<?= (int)$s['id'] ?>"
                  data-search="<?= htmlspecialchars($search) ?>"
                  <?php foreach ($s['tags'] as $g => $names): ?>data-<?= $g ?>="<?= htmlspecialchars(json_encode($names)) ?>" <?php endforeach; ?>>
-            <div class="browser-bar" aria-hidden="true">
-                <span class="dots"><i></i><i></i><i></i></span>
-                <span class="address"><?php if (str_starts_with($s['url'], 'https')): ?><i class="fas fa-lock"></i><?php endif; ?><?= htmlspecialchars($address) ?></span>
+            <div class="browser-bar">
+                <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="address" aria-hidden="true"><?php if (str_starts_with($s['url'], 'https')): ?><i class="fas fa-lock"></i><?php endif; ?><?= htmlspecialchars($address) ?></span>
+                <button type="button" class="site-heart" data-site-heart="<?= (int)$s['id'] ?>" aria-pressed="false"
+                        aria-label="Save <?= htmlspecialchars($s['name']) ?>" title="Save"><i class="fas fa-heart" aria-hidden="true"></i></button>
             </div>
             <a class="site-shot" href="<?= htmlspecialchars($s['url']) ?>" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
                 <?php if ($s['screenshot_url']): ?>
@@ -210,22 +246,67 @@ try {
     const filters = [...document.querySelectorAll('.site-filter')];
     const count = document.getElementById('siteCount');
     const none = document.getElementById('noSites');
+    const grid = document.getElementById('siteGrid');
+    const savedBtn = document.getElementById('sitesSaved');
+
+    // ---------- Saved sites (this device only) ----------
+    const KEY = 'sce:saved:websites';
+    const getSaved = () => { try { return new Set(JSON.parse(localStorage.getItem(KEY) || '[]').map(String)); } catch (e) { return new Set(); } };
+    const putSaved = (ids) => { try { localStorage.setItem(KEY, JSON.stringify([...ids])); } catch (e) {} };
+    let savedOnly = false;
+    let toastEl, toastTimer;
+    function toast(msg) {
+        if (window.SCEToast) return window.SCEToast(msg);
+        if (!toastEl) { toastEl = Object.assign(document.createElement('div'), { className: 'wsaved-toast' }); toastEl.setAttribute('role', 'status'); document.body.appendChild(toastEl); }
+        toastEl.textContent = msg;
+        toastEl.classList.add('is-visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove('is-visible'), 2600);
+    }
+    function syncHearts() {
+        const ids = getSaved();
+        cards.forEach((card) => card.querySelector('[data-site-heart]')?.setAttribute('aria-pressed', String(ids.has(card.dataset.id))));
+        const n = cards.filter((c) => ids.has(c.dataset.id)).length;
+        savedBtn.querySelector('.n').textContent = n;
+        savedBtn.hidden = n === 0 && !savedOnly;
+    }
+    grid.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-site-heart]');
+        if (!b) return;
+        const ids = getSaved();
+        const id = b.dataset.siteHeart;
+        const on = !ids.has(id);
+        on ? ids.add(id) : ids.delete(id);
+        putSaved(ids);
+        b.classList.remove('is-popping'); void b.offsetWidth; if (on) b.classList.add('is-popping');
+        syncHearts();
+        toast(on ? 'Saved. It will show first when you browse.' : 'Removed from saved.');
+        if (savedOnly) apply();
+    });
+    savedBtn.addEventListener('click', () => { savedOnly = !savedOnly; savedBtn.setAttribute('aria-pressed', String(savedOnly)); apply(); });
+    window.addEventListener('storage', (e) => { if (e.key === KEY) { syncHearts(); if (savedOnly) apply(); } });
 
     function apply() {
         const q = search.value.trim().toLowerCase();
+        const saved = getSaved();
+        // Saved sites first, otherwise the admin's order
+        [...cards].sort((a, b) => (saved.has(b.dataset.id) - saved.has(a.dataset.id)) || (cards.indexOf(a) - cards.indexOf(b)))
+            .forEach((card) => grid.appendChild(card));
         let shown = 0;
         cards.forEach((card) => {
-            const ok = (!q || card.dataset.search.includes(q)) &&
+            const ok = (!savedOnly || saved.has(card.dataset.id)) && (!q || card.dataset.search.includes(q)) &&
                 filters.every((f) => !f.value || JSON.parse(card.dataset[f.dataset.group] || '[]').includes(f.value));
             card.style.display = ok ? '' : 'none';
             if (ok) shown++;
         });
-        const filtered = q || filters.some((f) => f.value);
+        const filtered = q || savedOnly || filters.some((f) => f.value);
         count.textContent = filtered ? `${shown} of ${cards.length} websites` : `${cards.length} website${cards.length === 1 ? '' : 's'}`;
         none.style.display = shown ? 'none' : '';
     }
     search.addEventListener('input', apply);
     filters.forEach((f) => f.addEventListener('change', apply));
+    syncHearts();
+    apply();
 })();
 </script>
 
