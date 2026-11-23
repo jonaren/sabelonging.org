@@ -46,13 +46,91 @@ try {
     .site-tag.owner { background: #fbe9ea; color: #9a323f; }
     .site-tag .label { font-weight: 400; opacity: .75; }
     .site-actions { margin-top: auto; padding-top: .5rem; }
+
+    /* Hero: navy band with a fanned stack of real site screenshots */
+    .whero {
+        position: relative; isolation: isolate; overflow: hidden;
+        background: var(--hero-bg, #13243a); color: #fff;
+        padding: clamp(48px, 7vw, 96px) 0 clamp(56px, 8vw, 104px);
+        margin-bottom: 2rem;
+    }
+    .whero::before {
+        content: ""; position: absolute; z-index: -1; inset: -20% -10% -20% 40%;
+        background:
+            radial-gradient(40% 45% at 70% 25%, rgba(224, 201, 47, .20), transparent 70%),
+            radial-gradient(40% 45% at 40% 60%, rgba(140, 35, 51, .32), transparent 70%),
+            radial-gradient(45% 50% at 78% 85%, rgba(47, 106, 163, .40), transparent 70%);
+        filter: blur(20px);
+    }
+    .whero-grid { display: grid; gap: clamp(40px, 6vw, 72px); grid-template-columns: minmax(0, 1fr); align-items: center; }
+    @media (min-width: 992px) { .whero-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } }
+    .whero h1 { color: #fff; font-size: clamp(44px, 6vw, 76px); line-height: .98; letter-spacing: -0.02em; margin: 0 0 18px; }
+    .whero-lede { font-size: clamp(18px, 1.6vw, 20px); color: #c3cfdd; max-width: 42ch; margin: 0 0 28px; }
+    .whero .btn-light { border-radius: 999px; font-weight: 600; padding: .75rem 1.5rem; color: #13243a; }
+    .whero .btn-light:hover { background: var(--youth, #e0c92f); border-color: var(--youth, #e0c92f); color: var(--youth-ink, #2f2900); }
+
+    .whero-stack { position: relative; aspect-ratio: 16 / 11; max-width: 640px; width: 100%; justify-self: center; }
+    .whero-win {
+        position: absolute; width: 74%; border-radius: 12px; overflow: hidden;
+        background: #fff; box-shadow: 0 30px 60px -24px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 255, 255, .08);
+        transition: transform .5s cubic-bezier(.34, 1.4, .64, 1);
+    }
+    .whero-win .bar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #e9edf1; }
+    .whero-win .bar i { width: 8px; height: 8px; border-radius: 50%; background: #c9d1d9; flex: none; }
+    .whero-win .bar i:first-child { background: #8c2333; }
+    .whero-win .bar i:nth-child(2) { background: #e0c92f; }
+    .whero-win .bar span {
+        flex: 1; min-width: 0; padding: 1px 8px; border-radius: 4px; background: #fff; color: #66748a;
+        font: 11px/1.6 ui-monospace, Menlo, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .whero-win img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; }
+    .whero-win:nth-child(1) { left: 0;   top: 14%; transform: rotate(-7deg); z-index: 1; }
+    .whero-win:nth-child(2) { right: 0;  top: 0;   transform: rotate(5deg);  z-index: 2; }
+    .whero-win:nth-child(3) { left: 13%; top: 30%; transform: rotate(-1deg); z-index: 3; }
+    .whero-stack:hover .whero-win:nth-child(1) { transform: rotate(-10deg) translate(-12px, 6px); }
+    .whero-stack:hover .whero-win:nth-child(2) { transform: rotate(8deg) translate(12px, -8px); }
+    .whero-stack:hover .whero-win:nth-child(3) { transform: rotate(0deg) translateY(-6px) scale(1.02); }
+    /* One entrance: the windows fan out from a single stack */
+    @media (prefers-reduced-motion: no-preference) {
+        .whero-win { animation: whero-fan .9s cubic-bezier(.2, .8, .2, 1) backwards; }
+        .whero-win:nth-child(1) { animation-delay: .15s; }
+        .whero-win:nth-child(2) { animation-delay: .25s; }
+        .whero-win:nth-child(3) { animation-delay: .35s; }
+        .whero-copy > * { animation: whero-rise .7s cubic-bezier(.2, .8, .2, 1) backwards; }
+        .whero-copy > :nth-child(2) { animation-delay: .08s; }
+        .whero-copy > :nth-child(3) { animation-delay: .16s; }
+        @keyframes whero-fan { from { opacity: 0; transform: translate(0, 40px) rotate(0) scale(.92); } }
+        @keyframes whero-rise { from { opacity: 0; transform: translateY(14px); } }
+    }
+    @media (max-width: 575.98px) { .whero-win .bar span { font-size: 9px; } }
 </style>
 
-<div class="container py-4">
-    <header class="sites-intro mb-4">
-        <h1 class="display-6 mb-2">Websites</h1>
-        <p class="lead subtitle mb-0">A directory of websites from across the territory. Search, or filter by what the site is and who runs it.</p>
-    </header>
+<?php $hero_shots = array_slice(array_values(array_filter($sites, fn($s) => !empty($s['screenshot_url']))), 0, 3); ?>
+<section class="whero">
+    <div class="container">
+        <div class="whero-grid">
+            <div class="whero-copy">
+                <h1>Websites</h1>
+                <p class="whero-lede">A directory of websites from across the territory. Search, or filter by what the site is and who runs it.</p>
+                <?php if ($sites): ?>
+                <a class="btn btn-light" href="#siteSearch">Browse <?= count($sites) ?> websites <i class="fas fa-arrow-down ms-1" aria-hidden="true"></i></a>
+                <?php endif; ?>
+            </div>
+            <?php if (count($hero_shots) === 3): ?>
+            <div class="whero-stack" aria-hidden="true">
+                <?php foreach ($hero_shots as $s): ?>
+                <div class="whero-win">
+                    <div class="bar"><i></i><i></i><i></i><span><?= htmlspecialchars(websiteDisplayAddress($s['url'])) ?></span></div>
+                    <img src="<?= htmlspecialchars($s['screenshot_url']) ?>" alt="" width="1280" height="800">
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</section>
+
+<div class="container pb-4">
 
     <div class="card filter-card mb-3">
         <div class="card-body">
