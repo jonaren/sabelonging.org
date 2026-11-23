@@ -10,5 +10,8 @@ handlers:
   - url: /images
     static_dir: images
 
+  - url: /assets
+    static_dir: assets
+
   - url: .*
     script: auto
