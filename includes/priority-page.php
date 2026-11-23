@@ -12,7 +12,7 @@ $counts = priorityCounts();
 <section class="phero">
     <div class="container">
         <a class="phero-back" href="/"><i class="fas fa-arrow-left" aria-hidden="true"></i> All priorities</a>
-        <div class="phero-band <?= $band_class[$priority_id] ?>">
+        <div class="phero-band <?= $band_class[$priority_id] ?>" data-watermark="<?= htmlspecialchars($priority['key']) ?>">
             <h1><?= htmlspecialchars($priority['key']) ?></h1>
             <p><?= htmlspecialchars($priority['blurb']) ?><?php if (isset($counts[$priority['key']])): ?> <?= $counts[$priority['key']] ?> resources.<?php endif; ?></p>
         </div>
