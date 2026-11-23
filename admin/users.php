@@ -52,6 +52,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Handle update role
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_role') {
+    $id = (int)($_POST['id'] ?? 0);
+    $newRole = sanitizeInput($_POST['role'] ?? '');
+    $allowedRoles = ['content_creator', 'editor', 'admin'];
+
+    if ($id === $_SESSION['admin_id']) {
+        flashMessage('error', 'You cannot change your own role');
+    } elseif (!in_array($newRole, $allowedRoles, true)) {
+        flashMessage('error', 'Invalid role selected');
+    } else {
+        try {
+            $stmt = $resources_pdo->prepare("SELECT role FROM admin_users WHERE id = ?");
+            $stmt->execute([$id]);
+            $target = $stmt->fetch();
+
+            if (!$target) {
+                flashMessage('error', 'User not found');
+            } elseif ($target['role'] === 'admin') {
+                flashMessage('error', 'Cannot change the role of an admin user');
+            } else {
+                $stmt = $resources_pdo->prepare("UPDATE admin_users SET role = ? WHERE id = ?");
+                $stmt->execute([$newRole, $id]);
+                flashMessage('success', 'User role updated successfully');
+            }
+        } catch (Exception $e) {
+            flashMessage('error', 'Error updating user role: ' . $e->getMessage());
+        }
+    }
+
+    header('Location: users.php');
+    exit;
+}
+
 // Handle delete user
 if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
     $id = (int)$_GET['id'];
@@ -174,6 +208,12 @@ $users = $stmt->fetchAll();
             <nav class="col-md-3 col-lg-2 d-md-block sidebar">
                 <div class="position-sticky pt-3">
                     <div class="text-center text-white mb-4">
+                        <?php $site_logo_url = getSiteLogoUrl(); ?>
+                        <?php if ($site_logo_url): ?>
+                        <div style="width: 70px; height: 70px; background: #fff; border-radius: 50%; margin: 0 auto 0.75rem; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                            <img src="<?= htmlspecialchars($site_logo_url) ?>" alt="Logo" style="max-width: 75%; max-height: 75%; object-fit: contain;">
+                        </div>
+                        <?php endif; ?>
                         <h4><i class="fas fa-cogs"></i> Admin Panel</h4>
                         <small>Welcome, <?= htmlspecialchars($_SESSION['admin_username'] ?? 'Admin') ?></small>
                     </div>
@@ -313,6 +353,15 @@ $users = $stmt->fetchAll();
                                             </td>
                                             <td class="text-end">
                                                 <?php if ($user['id'] !== $_SESSION['admin_id']): ?>
+                                                    <?php if ($user['role'] !== 'admin'): ?>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-primary"
+                                                            title="Change Role"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#editRoleModal<?= $user['id'] ?>">
+                                                        <i class="fas fa-user"></i>
+                                                    </button>
+                                                    <?php endif; ?>
                                                     <a href="?action=toggle_active&id=<?= $user['id'] ?>"
                                                        class="btn btn-sm btn-outline-secondary"
                                                        title="<?= $user['is_active'] ? 'Deactivate' : 'Activate' ?>">
@@ -338,6 +387,45 @@ $users = $stmt->fetchAll();
             </main>
         </div>
     </div>
+
+    <!-- Edit Role Modals -->
+    <?php foreach ($users as $user): ?>
+        <?php if ($user['id'] !== $_SESSION['admin_id'] && $user['role'] !== 'admin'): ?>
+        <div class="modal fade" id="editRoleModal<?= $user['id'] ?>" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST">
+                        <input type="hidden" name="action" value="update_role">
+                        <input type="hidden" name="id" value="<?= $user['id'] ?>">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Change Role — <?= htmlspecialchars($user['username']) ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="role<?= $user['id'] ?>" class="form-label">Role *</label>
+                                <select class="form-select" id="role<?= $user['id'] ?>" name="role" required>
+                                    <option value="content_creator" <?= $user['role'] === 'content_creator' ? 'selected' : '' ?>>Content Creator</option>
+                                    <option value="editor" <?= $user['role'] === 'editor' ? 'selected' : '' ?>>Editor</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                <div class="form-text">
+                                    <strong>Content Creator:</strong> Can create resources, awaits admin approval to publish<br>
+                                    <strong>Editor:</strong> Can manage and publish resources<br>
+                                    <strong>Admin:</strong> Full access including user management
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update Role</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+    <?php endforeach; ?>
 
     <!-- Add User Modal -->
     <div class="modal fade" id="addUserModal" tabindex="-1">

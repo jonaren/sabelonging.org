@@ -137,7 +137,11 @@ $query = "
         c.name AS category_name,
         l.name AS language_name,
         m.name AS ministry_name,
-        au.username AS created_by_username
+        au.username AS created_by_username,
+        (SELECT GROUP_CONCAT(cat.name ORDER BY cat.display_order SEPARATOR '||')
+         FROM resource_categories rc
+         JOIN categories cat ON rc.category_id = cat.id
+         WHERE rc.resource_id = r.id) AS category_names
     FROM resources r
     LEFT JOIN resource_types rt ON r.resource_type_id = rt.id
     LEFT JOIN categories c ON r.category_id = c.id
@@ -158,6 +162,13 @@ $resources = $stmt->fetchAll();
 
 // Get resource formats for filter
 $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHERE is_active = 1 ORDER BY name")->fetchAll();
+
+// Category pill styling (matches the colors used for the category buttons in includes/banner.php)
+$category_pills = [
+    'Leadership Development' => ['abbr' => 'LD', 'bg' => '#1d486b', 'border' => '#1d486b', 'color' => '#fff'],
+    'Spiritual Life' => ['abbr' => 'SL', 'bg' => '#9a323f', 'border' => '#5c0a10', 'color' => '#fff'],
+    'Youth' => ['abbr' => 'Y', 'bg' => '#ddcc3b', 'border' => '#c0a30e', 'color' => '#5c4a00'],
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -243,6 +254,12 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
             <nav class="col-md-3 col-lg-2 d-md-block sidebar">
                 <div class="position-sticky pt-3">
                     <div class="text-center text-white mb-4">
+                        <?php $site_logo_url = getSiteLogoUrl(); ?>
+                        <?php if ($site_logo_url): ?>
+                        <div style="width: 70px; height: 70px; background: #fff; border-radius: 50%; margin: 0 auto 0.75rem; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                            <img src="<?= htmlspecialchars($site_logo_url) ?>" alt="Logo" style="max-width: 75%; max-height: 75%; object-fit: contain;">
+                        </div>
+                        <?php endif; ?>
                         <h4><i class="fas fa-cogs"></i> Admin Panel</h4>
                         <small>Welcome, <?= htmlspecialchars($_SESSION['admin_username'] ?? 'Admin') ?></small>
                     </div>
@@ -419,7 +436,23 @@ $resource_types = $resources_pdo->query("SELECT id, name FROM resource_types WHE
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <?= htmlspecialchars($resource['category_name'] ?? 'N/A') ?>
+                                                    <?php
+                                                        $resource_categories = !empty($resource['category_names'])
+                                                            ? explode('||', $resource['category_names'])
+                                                            : (!empty($resource['category_name']) ? [$resource['category_name']] : []);
+                                                    ?>
+                                                    <?php if (empty($resource_categories)): ?>
+                                                        N/A
+                                                    <?php else: ?>
+                                                        <?php foreach ($resource_categories as $cat_name): ?>
+                                                            <?php $pill = $category_pills[$cat_name] ?? null; ?>
+                                                            <?php if ($pill): ?>
+                                                                <span class="badge me-1" title="<?= htmlspecialchars($cat_name) ?>" style="background-color: <?= $pill['bg'] ?>; border: 1px solid <?= $pill['border'] ?>; color: <?= $pill['color'] ?>;"><?= $pill['abbr'] ?></span>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-secondary me-1"><?= htmlspecialchars($cat_name) ?></span>
+                                                            <?php endif; ?>
+                                                        <?php endforeach; ?>
+                                                    <?php endif; ?>
                                                 </td>
                                                 <td>
                                                     <?php if (($resource['status'] ?? '') === 'awaiting_approval'): ?>

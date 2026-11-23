@@ -202,6 +202,12 @@ if (isset($_GET['edit'])) {
             <nav class="col-md-3 col-lg-2 d-md-block sidebar">
                 <div class="position-sticky pt-3">
                     <div class="text-center text-white mb-4">
+                        <?php $site_logo_url = getSiteLogoUrl(); ?>
+                        <?php if ($site_logo_url): ?>
+                        <div style="width: 70px; height: 70px; background: #fff; border-radius: 50%; margin: 0 auto 0.75rem; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                            <img src="<?= htmlspecialchars($site_logo_url) ?>" alt="Logo" style="max-width: 75%; max-height: 75%; object-fit: contain;">
+                        </div>
+                        <?php endif; ?>
                         <h4><i class="fas fa-cogs"></i> Admin Panel</h4>
                         <small>Welcome, <?= htmlspecialchars($_SESSION['admin_username']) ?></small>
                     </div>

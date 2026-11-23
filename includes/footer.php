@@ -33,19 +33,15 @@
                     -->
                 </div>
 
-                <div class="col-lg-2 col-md-6 mb-4">
+                <div class="col-lg-3 col-md-6 mb-4">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="https://salarmycentral.org/" target="_blank"><i class="fas fa-chevron-right me-2"></i> Central Connection</a></li>
-                        <?php if (get_setting('footer_contact_website')): ?>
-                        <li class="mb-2"><a href="<?= htmlspecialchars(get_setting('footer_contact_website')) ?>" target="_blank"><i class="fas fa-chevron-right me-2"></i> Salvation Army</a></li>
-                        <?php endif; ?>
-                        <?php if (get_setting('nav_link_3_url')): ?>
-                        <li class="mb-2"><a href="<?= htmlspecialchars(get_setting('nav_link_3_url')) ?>" target="_blank"><i class="fas fa-chevron-right me-2"></i> <?= htmlspecialchars(get_setting('nav_link_3_text', 'Belonging 2025')) ?></a></li>
-                        <?php endif; ?>
+                        <li class="mb-2"><a href="https://www.salvationarmy.org/" target="_blank"><i class="fas fa-chevron-right me-2"></i> Salvation Army IHQ</a></li>
+                        <li class="mb-2"><a href="/admin/login.php"><i class="fas fa-chevron-right me-2"></i> Admin Login</a></li>
                     </ul>
                 </div>
-
+<!--
                 <div class="col-lg-3 col-md-6 mb-4">
                     <h5>Resource Hub</h5>
                     <ul class="list-unstyled">
@@ -56,8 +52,9 @@
                         <li class="mb-2"><a href="/admin/login.php"><i class="fas fa-chevron-right me-2"></i> Admin Login</a></li>
                     </ul>
                 </div>
+                        -->
 
-                <div class="col-lg-3 col-md-6 mb-4">
+                <div class="col-lg-5 col-md-6 mb-4">
                     <h5>Contact</h5>
                     <ul class="list-unstyled text-white-50">
                         <?php if (get_setting('footer_contact_email')): ?>
