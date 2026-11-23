@@ -1,111 +1,93 @@
 <?php
 require_once 'admin/resources-config.php';
+require_once 'includes/priorities.php';
 
-// Get resource by slug
 $slug = $_GET['slug'] ?? '';
+$resource = null;
 
-if (!$slug) {
-    header('HTTP/1.0 404 Not Found');
-    include '404.php';
-    exit;
+if ($slug !== '') {
+    $stmt = $resources_pdo->prepare("
+        SELECT r.*,
+               rt.name AS resource_type_name,
+               l.name AS language_name,
+               m.name AS ministry_name
+        FROM resources r
+        LEFT JOIN resource_types rt ON r.resource_type_id = rt.id
+        LEFT JOIN languages l ON r.language_id = l.id
+        LEFT JOIN ministries m ON r.ministry_id = m.id
+        WHERE r.slug = ? AND r.is_published = 1
+    ");
+    $stmt->execute([$slug]);
+    $resource = $stmt->fetch();
 }
-
-$stmt = $resources_pdo->prepare("
-    SELECT r.*,
-           rt.name as resource_type_name,
-           rt.icon as resource_type_icon,
-           c.name as category_name,
-           l.name as language_name,
-           m.name as ministry_name,
-           au.username as created_by_name
-    FROM resources r
-    LEFT JOIN resource_types rt ON r.resource_type_id = rt.id
-    LEFT JOIN categories c ON r.category_id = c.id
-    LEFT JOIN languages l ON r.language_id = l.id
-    LEFT JOIN ministries m ON r.ministry_id = m.id
-    LEFT JOIN admin_users au ON r.created_by = au.id
-    WHERE r.slug = ? AND r.is_published = 1
-");
-
-$stmt->execute([$slug]);
-$resource = $stmt->fetch();
 
 if (!$resource) {
-    header('HTTP/1.0 404 Not Found');
-    include '404.php';
+    http_response_code(404);
+    $page_title = 'Resource not found';
+    include 'includes/header.php';
+    ?>
+    <section class="notfound container">
+        <h1>We couldn’t find that resource</h1>
+        <p class="lead text-secondary mb-4">It may have been moved or unpublished.</p>
+        <a class="btn btn-primary" href="/">Browse all resources</a>
+    </section>
+    <?php
+    include 'includes/footer.php';
     exit;
 }
 
-// Increment view count
-$update_views = $resources_pdo->prepare("UPDATE resources SET view_count = view_count + 1 WHERE id = ?");
-$update_views->execute([$resource['id']]);
+$resources_pdo->prepare("UPDATE resources SET view_count = view_count + 1 WHERE id = ?")->execute([$resource['id']]);
 
-// Get additional files
+// Priorities (multi-category), in logo order
+$cat_stmt = $resources_pdo->prepare("
+    SELECT c.name FROM resource_categories rc JOIN categories c ON c.id = rc.category_id WHERE rc.resource_id = ?
+");
+$cat_stmt->execute([$resource['id']]);
+$resource_categories = $cat_stmt->fetchAll(PDO::FETCH_COLUMN);
+$priority_class = ['Youth' => 'youth', 'Spiritual Life' => 'spirit', 'Leadership Development' => 'lead'];
+$my_priorities = array_values(array_filter(array_keys($priority_class), fn($p) => in_array($p, $resource_categories, true)));
+
+// Files
 $files_stmt = $resources_pdo->prepare("SELECT * FROM resource_files WHERE resource_id = ? ORDER BY created_at ASC");
 $files_stmt->execute([$resource['id']]);
 $files = $files_stmt->fetchAll();
 
-// Get related resources (same category or type)
+// Related: shares a priority, else the same format
 $related_stmt = $resources_pdo->prepare("
-    SELECT r.*, rt.name as resource_type_name, rt.icon as resource_type_icon,
-           c.name as category_name
+    SELECT DISTINCT r.id, r.resource_name, r.slug, r.description, r.thumbnail_image, r.created_at, rt.name AS resource_type_name
     FROM resources r
     LEFT JOIN resource_types rt ON r.resource_type_id = rt.id
-    LEFT JOIN categories c ON r.category_id = c.id
-    WHERE r.id != ?
-    AND r.is_published = 1
-    AND (r.category_id = ? OR r.resource_type_id = ?)
+    LEFT JOIN resource_categories rc ON rc.resource_id = r.id
+    WHERE r.id != ? AND r.is_published = 1
+      AND (rc.category_id IN (SELECT category_id FROM resource_categories WHERE resource_id = ?) OR r.resource_type_id = ?)
     ORDER BY r.created_at DESC
     LIMIT 3
 ");
-
-$related_stmt->execute([$resource['id'], $resource['category_id'], $resource['resource_type_id']]);
+$related_stmt->execute([$resource['id'], $resource['id'], $resource['resource_type_id']]);
 $related_resources = $related_stmt->fetchAll();
 
-// Resource type icons mapping
-$resourceTypeIcons = [
-    'Article' => 'fas fa-file-alt',
-    'Video' => 'fas fa-video',
-    'Book' => 'fas fa-book',
-    'Course' => 'fas fa-graduation-cap',
-    'Tool' => 'fas fa-tools',
-    'Website' => 'fas fa-globe',
-    'Podcast' => 'fas fa-podcast',
-    'Document' => 'fas fa-file-text',
-    'Guide' => 'fas fa-book-open',
-    'Template' => 'fas fa-file-code',
-    'PDF' => 'fas fa-file-pdf',
-    'Presentation' => 'fas fa-presentation',
-    'Workshop' => 'fas fa-chalkboard-teacher',
-    'Webinar' => 'fas fa-desktop',
-    'Tutorial' => 'fas fa-play-circle',
-    'Study' => 'fas fa-clipboard-list',
-    'Research' => 'fas fa-search',
-    'Report' => 'fas fa-chart-bar'
+$format_icons = [
+    'Article' => 'fa-file-lines', 'Video' => 'fa-video', 'Book' => 'fa-book', 'Course' => 'fa-graduation-cap',
+    'Tool' => 'fa-screwdriver-wrench', 'Website' => 'fa-globe', 'Podcast' => 'fa-podcast', 'Document' => 'fa-file',
+    'Guide' => 'fa-book-open', 'Template' => 'fa-file-code', 'PDF' => 'fa-file-pdf', 'Presentation' => 'fa-person-chalkboard',
+    'Workshop' => 'fa-chalkboard-user', 'Webinar' => 'fa-desktop', 'Tutorial' => 'fa-circle-play', 'Study' => 'fa-clipboard-list',
+    'Research' => 'fa-magnifying-glass', 'Report' => 'fa-chart-column', 'Sermon' => 'fa-church',
 ];
+$placeholder = fn($id) => '/images/tn-' . ((int)$id % 8 + 1) . '.jpg';
+$thumbnailSrc = $resource['thumbnail_image'] ?: $placeholder($resource['id']);
 
-$typeIcon = $resourceTypeIcons[$resource['resource_type_name']] ?? 'fas fa-bookmark';
+// Where the main button goes: external URL first, then the button link (same priority as the API)
+$access_link = ($resource['is_external_resource'] && $resource['external_url']) ? $resource['external_url'] : ($resource['button_link'] ?: '');
 
-// Placeholder images for when ThumbnailImage is empty
-$placeholderImages = [
-    '/images/tn-1.jpg',
-    '/images/tn-2.jpg',
-    '/images/tn-3.jpg',
-    '/images/tn-4.jpg',
-    '/images/tn-5.jpg',
-    '/images/tn-6.jpg',
-    '/images/tn-7.jpg',
-    '/images/tn-8.jpg'
-];
-
-function getRandomPlaceholder($placeholders) {
-    return $placeholders[array_rand($placeholders)];
+function fileIcon(string $name): string {
+    return match (strtolower(pathinfo($name, PATHINFO_EXTENSION))) {
+        'pdf' => 'fa-file-pdf', 'doc', 'docx' => 'fa-file-word', 'xls', 'xlsx' => 'fa-file-excel',
+        'ppt', 'pptx' => 'fa-file-powerpoint', 'jpg', 'jpeg', 'png', 'gif', 'webp' => 'fa-file-image',
+        default => 'fa-file',
+    };
 }
 
-$thumbnailSrc = $resource['thumbnail_image'] ?: getRandomPlaceholder($placeholderImages);
-
-// Set page meta for header
-$page_title = htmlspecialchars($resource['resource_name']) . ' - Belonging Resources';
+$page_title = $resource['resource_name'] . ' - Belonging Resources';
 $meta_description = $resource['description'];
 $meta_keywords = $resource['meta_data'];
 $og_title = $resource['resource_name'];
@@ -113,217 +95,94 @@ $og_description = $resource['description'];
 $og_image = $thumbnailSrc;
 $og_url = RESOURCES_SITE_URL . '/resource.php?slug=' . urlencode($slug);
 $og_type = 'article';
+include 'includes/header.php';
 ?>
-<?php include 'includes/header.php'; ?>
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <!-- Breadcrumb -->
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="resources.html">Resources</a></li>
-                    <?php if ($resource['category_name']): ?>
-                        <li class="breadcrumb-item"><?= htmlspecialchars($resource['category_name']) ?></li>
-                    <?php endif; ?>
-                    <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($resource['resource_name']) ?></li>
-                </ol>
-            </nav>
-            
-            <div class="row align-items-center">
-                <div class="col-lg-8">
-                    <h1 class="display-4 mb-3"><?= htmlspecialchars($resource['resource_name']) ?></h1>
-                    <p class="lead mb-4"><?= htmlspecialchars($resource['description']) ?></p>
-                    
-                    <?php if ($resource['button_link']): ?>
-                        <a href="<?= htmlspecialchars($resource['button_link']) ?>" target="_blank" class="btn btn-primary btn-lg me-3">
-                            <i class="fas fa-external-link-alt"></i> Access Resource
-                        </a>
-                    <?php endif; ?>
-                    
-                    <a href="resources.html" class="btn btn-outline-light">
-                        <i class="fas fa-arrow-left"></i> Back to Resources
+<article class="rdetail">
+    <div class="container">
+        <a class="phero-back" href="/"><i class="fas fa-arrow-left" aria-hidden="true"></i> All resources</a>
+
+        <div class="rdetail-grid">
+            <div class="rdetail-media">
+                <img src="<?= htmlspecialchars($thumbnailSrc) ?>" alt="" onerror="this.onerror=null;this.src='<?= $placeholder($resource['id']) ?>'">
+                <?php if ($my_priorities): ?>
+                <div class="pribbon" aria-hidden="true">
+                    <?php foreach ($my_priorities as $p): ?><span class="<?= $priority_class[$p] ?>"></span><?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div>
+                <?php if ($resource['resource_type_name']): ?>
+                <div class="rcard-format"><i class="fas <?= $format_icons[$resource['resource_type_name']] ?? 'fa-bookmark' ?>" aria-hidden="true"></i><?= htmlspecialchars($resource['resource_type_name']) ?></div>
+                <?php endif; ?>
+                <h1><?= htmlspecialchars($resource['resource_name']) ?></h1>
+                <p class="rdetail-desc"><?= nl2br(htmlspecialchars($resource['description'])) ?></p>
+
+                <div class="rdetail-actions">
+                    <?php if ($access_link): ?>
+                    <a class="btn btn-primary" href="<?= htmlspecialchars($access_link) ?>" target="_blank" rel="noopener noreferrer">
+                        Open resource <i class="fas fa-arrow-up-right-from-square ms-1" aria-hidden="true"></i><span class="visually-hidden">(opens in a new tab)</span>
                     </a>
+                    <?php endif; ?>
+                    <?php if ($files): ?>
+                    <a class="btn btn-outline-primary" href="#files"><?= count($files) === 1 ? 'Download file' : 'Download files (' . count($files) . ')' ?></a>
+                    <?php endif; ?>
                 </div>
-                
-                <div class="col-lg-4">
-                    <img src="<?= htmlspecialchars($thumbnailSrc) ?>" 
-                         alt="<?= htmlspecialchars($resource['resource_name']) ?>" 
-                         class="hero-image">
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <div class="container mt-5 mb-5">
-        <!-- Resource Meta Information -->
-        <div class="resource-meta mb-3">
-            <div class="row">
-                <div class="col-md-8">
-                    <h5 class="mb-3">Resource Details</h5>
-                    <div class="d-flex flex-wrap gap-2">
-                        <?php if ($resource['resource_type_name']): ?>
-                            <span class="badge tag tag-resource-type">
-                                <i class="<?= $typeIcon ?>"></i> <?= htmlspecialchars($resource['resource_type_name']) ?>
-                            </span>
-                        <?php endif; ?>
-
-                        <?php if ($resource['category_name']): ?>
-                            <span class="badge tag tag-category">
-                                <i class="fas fa-tag"></i> <?= htmlspecialchars($resource['category_name']) ?>
-                            </span>
-                        <?php endif; ?>
-
-                        <?php if ($resource['ministry_name']): ?>
-                            <span class="badge tag tag-ministry">
-                                <i class="fas fa-church"></i> <?= htmlspecialchars($resource['ministry_name']) ?>
-                            </span>
-                        <?php endif; ?>
-
-                        <?php if ($resource['language_name']): ?>
-                            <span class="badge tag tag-language">
-                                <i class="fas fa-globe"></i> <?= htmlspecialchars($resource['language_name']) ?>
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <div class="col-md-4 text-md-end">
-                    <small class="text-muted">
-                        <i class="fas fa-calendar"></i> 
-                        Added <?= date('F j, Y', strtotime($resource['created_at'])) ?>
-                    </small>
-                </div>
+                <dl class="facts">
+                    <?php if ($my_priorities): ?>
+                    <dt>Priority</dt>
+                    <dd><?php foreach ($my_priorities as $p): ?><span class="prio"><span class="swatch <?= $priority_class[$p] ?>" aria-hidden="true"></span><?= htmlspecialchars($p) ?></span><?php endforeach; ?></dd>
+                    <?php endif; ?>
+                    <?php if ($resource['ministry_name']): ?><dt>Ministry</dt><dd><?= htmlspecialchars($resource['ministry_name']) ?></dd><?php endif; ?>
+                    <?php if ($resource['language_name']): ?><dt>Language</dt><dd><?= htmlspecialchars($resource['language_name']) ?></dd><?php endif; ?>
+                    <dt>Added</dt><dd><?= date('F j, Y', strtotime($resource['created_at'])) ?></dd>
+                </dl>
             </div>
         </div>
 
-        <!-- About Content -->
         <?php if ($resource['about_content']): ?>
-            <div class="content-section">
-                <h4 class="mb-4">About This Resource</h4>
-                <div class="content-body">
-                    <?= $resource['about_content'] ?>
-                </div>
-            </div>
+        <section class="rsection">
+            <h2>About this resource</h2>
+            <div class="prose"><?= $resource['about_content'] ?></div>
+        </section>
         <?php endif; ?>
 
-        <!-- Additional Files -->
-        <?php if (!empty($files)): ?>
-            <div class="content-section">
-                <h4 class="mb-4">
-                    <i class="fas fa-paperclip"></i> 
-                    Additional Files (<?= count($files) ?>)
-                </h4>
-                
-                <div class="row">
-                    <?php foreach ($files as $file): ?>
-                        <?php
-                        $extension = strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION));
-                        $iconClass = 'file-default';
-                        $icon = 'fas fa-file';
-                        
-                        switch ($extension) {
-                            case 'pdf':
-                                $iconClass = 'file-pdf';
-                                $icon = 'fas fa-file-pdf';
-                                break;
-                            case 'doc':
-                            case 'docx':
-                                $iconClass = 'file-doc';
-                                $icon = 'fas fa-file-word';
-                                break;
-                            case 'xls':
-                            case 'xlsx':
-                                $iconClass = 'file-xls';
-                                $icon = 'fas fa-file-excel';
-                                break;
-                            case 'ppt':
-                            case 'pptx':
-                                $iconClass = 'file-ppt';
-                                $icon = 'fas fa-file-powerpoint';
-                                break;
-                            case 'jpg':
-                            case 'jpeg':
-                            case 'png':
-                            case 'gif':
-                                $iconClass = 'file-img';
-                                $icon = 'fas fa-file-image';
-                                break;
-                        }
-                        ?>
-                        <div class="col-12 col-md-6 mb-3">
-                            <div class="file-item">
-                                <div class="d-flex align-items-center">
-                                    <div class="file-icon <?= $iconClass ?> me-3">
-                                        <i class="<?= $icon ?>"></i>
-                                    </div>
-                                    <div class="flex-grow-1 text-truncate">
-                                        <h6 class="mb-1 text-truncate"><?= htmlspecialchars($file['display_name']) ?></h6>
-                                        <small class="text-muted">
-                                            <?= formatFileSize($file['file_size']) ?> •
-                                            <?= strtoupper($extension) ?>
-                                        </small>
-                                    </div>
-                                    <a href="/download.php?id=<?= (int)$file['id'] ?>"
-                                       class="btn btn-outline-primary btn-sm ms-2 flex-shrink-0">
-                                        <i class="fas fa-download"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <!-- Related Resources -->
-        <?php if (!empty($related_resources)): ?>
-            <div class="content-section">
-                <h4 class="mb-4">
-                    <i class="fas fa-lightbulb"></i> 
-                    Related Resources
-                </h4>
-                
-                <div class="row">
-                    <?php foreach ($related_resources as $related): ?>
-                        <div class="col-md-4 mb-4">
-                            <div class="card related-card">
-                                <img src="<?= htmlspecialchars($related['thumbnail_image'] ?: getRandomPlaceholder($placeholderImages)) ?>" 
-                                     class="card-img-top" alt="<?= htmlspecialchars($related['resource_name']) ?>">
-                                <div class="card-body">
-                                    <h6 class="card-title"><?= htmlspecialchars($related['resource_name']) ?></h6>
-                                    <p class="card-text text-muted small">
-                                        <?= htmlspecialchars(substr($related['description'], 0, 80)) ?>
-                                        <?= strlen($related['description']) > 80 ? '...' : '' ?>
-                                    </p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">
-                                            <?= htmlspecialchars($related['resource_type_name']) ?>
-                                        </small>
-                                        <a href="resource.php?slug=<?= urlencode($related['slug']) ?>" 
-                                           class="btn btn-outline-primary btn-sm">
-                                            View
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <!-- Action Buttons -->
-        <div class="text-center mt-4 mb-5">
-            <?php if ($resource['button_link']): ?>
-                <a href="<?= htmlspecialchars($resource['button_link']) ?>" target="_blank"
-                   class="btn btn-primary btn-lg me-3 mb-3">
-                    <i class="fas fa-external-link-alt"></i> Access Resource
+        <?php if ($files): ?>
+        <section class="rsection" id="files">
+            <h2>Files</h2>
+            <div class="files">
+                <?php foreach ($files as $file): $ext = strtoupper(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>
+                <a class="file" href="/download.php?id=<?= (int)$file['id'] ?>">
+                    <span class="file-icon"><i class="fas <?= fileIcon($file['file_name']) ?>" aria-hidden="true"></i></span>
+                    <span class="d-flex flex-column" style="min-width:0">
+                        <span class="file-name"><?= htmlspecialchars($file['display_name'] ?: $file['file_name']) ?></span>
+                        <span class="file-meta"><?= $ext ?><?= $file['file_size'] ? ', ' . formatFileSize((int)$file['file_size']) : '' ?></span>
+                    </span>
+                    <i class="fas fa-download" aria-hidden="true"></i><span class="visually-hidden">Download</span>
                 </a>
-            <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php endif; ?>
 
-            <a href="resources.html" class="btn btn-outline-primary btn-lg mb-3">
-                <i class="fas fa-search"></i> Browse More Resources
-            </a>
-        </div>
+        <?php if ($related_resources): ?>
+        <section class="rsection">
+            <h2>Related resources</h2>
+            <div class="rgrid">
+                <?php foreach ($related_resources as $rel): ?>
+                <a class="rcard" href="/resource.php?slug=<?= urlencode($rel['slug']) ?>">
+                    <div class="rcard-media"><img src="<?= htmlspecialchars($rel['thumbnail_image'] ?: $placeholder($rel['id'])) ?>" alt="" loading="lazy"></div>
+                    <div class="rcard-body">
+                        <?php if ($rel['resource_type_name']): ?><div class="rcard-format"><i class="fas <?= $format_icons[$rel['resource_type_name']] ?? 'fa-bookmark' ?>" aria-hidden="true"></i><?= htmlspecialchars($rel['resource_type_name']) ?></div><?php endif; ?>
+                        <h3 class="rcard-title"><?= htmlspecialchars($rel['resource_name']) ?></h3>
+                        <p class="rcard-desc"><?= htmlspecialchars($rel['description']) ?></p>
+                    </div>
+                </a>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php endif; ?>
     </div>
+</article>
 <?php include 'includes/footer.php'; ?>
