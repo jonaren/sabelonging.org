@@ -107,6 +107,11 @@ if (!isset($current_page)) $current_page = '';
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="websites.php">
+                                <i class="fas fa-window-maximize"></i> Websites
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link <?= $current_page === 'categories' ? 'active' : '' ?>" href="categories.php">
                                 <i class="fas fa-tags"></i> Categories
                             </a>

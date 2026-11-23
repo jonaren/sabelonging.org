@@ -577,6 +577,11 @@ require_once __DIR__ . '/settings.php';
                             <i class="<?= htmlspecialchars(get_setting('nav_link_1_icon', 'fas fa-home')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_1_text', 'Resources')) ?>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/websites.php">
+                            <i class="fas fa-window-maximize"></i> Websites
+                        </a>
+                    </li>
                     <?php if (get_setting('nav_link_2_text') || get_setting('nav_link_3_text') || get_setting('nav_link_4_text') || get_setting('nav_link_5_text') || get_setting('nav_link_6_text')): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
