@@ -573,12 +573,13 @@ require_once __DIR__ . '/settings.php';
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="<?= htmlspecialchars(get_setting('nav_link_1_url', '/')) ?>">
+                        <?php $is_websites_page = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'websites.php'; ?>
+                        <a class="nav-link<?= $is_websites_page ? '' : ' active' ?>" href="<?= htmlspecialchars(get_setting('nav_link_1_url', '/')) ?>">
                             <i class="<?= htmlspecialchars(get_setting('nav_link_1_icon', 'fas fa-home')) ?>"></i> <?= htmlspecialchars(get_setting('nav_link_1_text', 'Resources')) ?>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/websites.php">
+                        <a class="nav-link<?= $is_websites_page ? ' active' : '' ?>" href="/websites.php">
                             <i class="fas fa-window-maximize"></i> Websites
                         </a>
                     </li>
