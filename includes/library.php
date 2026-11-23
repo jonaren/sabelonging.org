@@ -30,6 +30,9 @@ $switcher = [
                         <option value=""><?= htmlspecialchars($f['label']) ?></option>
                     </select>
                 <?php endforeach; ?>
+                <button type="button" class="saved-toggle" id="savedToggle" aria-pressed="false" hidden>
+                    <i class="fas fa-heart" aria-hidden="true"></i> Saved <span class="n">0</span>
+                </button>
                 <button type="button" class="lib-clear" id="clearFilters" hidden>Clear all</button>
             </div>
         </div>

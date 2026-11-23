@@ -124,6 +124,9 @@ include 'includes/header.php';
                         Open resource <i class="fas fa-arrow-up-right-from-square ms-1" aria-hidden="true"></i><span class="visually-hidden">(opens in a new tab)</span>
                     </a>
                     <?php endif; ?>
+                    <button type="button" class="btn btn-outline-primary heart-btn" data-save-kind="resources" data-save-id="<?= (int)$resource['id'] ?>" aria-pressed="false">
+                        <i class="fas fa-heart" aria-hidden="true"></i> <span class="heart-label">Save</span>
+                    </button>
                     <?php if ($files): ?>
                     <a class="btn btn-outline-primary" href="#files"><?= count($files) === 1 ? 'Download file' : 'Download files (' . count($files) . ')' ?></a>
                     <?php endif; ?>

@@ -49,7 +49,11 @@
     let filtered = [];
     let shown = 0;
     let priority = '';      // value of the priority switcher (home only)
+    let savedOnly = false;  // "Saved" toggle
+    const Saved = window.SCESaved || { get: () => new Set(), onChange: () => {} };
+    const savedToggle = $('savedToggle');
     let shownCount = 0;     // number currently displayed in the count, for the roll animation
+    let savedIds = new Set();
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     // Stable placeholder per resource, so it doesn't change on every re-render
@@ -83,8 +87,12 @@
         const img = r.ThumbnailImage || placeholderFor(r);
         const mine = prioritiesOf(r);
         const style = `--i:${i};${canMorph ? `view-transition-name:r-${Number(r.id) || i}` : ''}`;
+        const saved = savedIds.has(String(r.id));
         return `
-        <a class="rcard${entering ? ' is-entering' : ''}" href="${esc(href)}" style="${style}"${external ? ' target="_blank" rel="noopener noreferrer"' : ''}>
+        <div class="rcard-wrap${entering ? ' is-entering' : ''}" style="${style}">
+        <button type="button" class="heart" data-save-kind="resources" data-save-id="${esc(r.id)}" aria-pressed="${saved}"
+                aria-label="Save ${esc(r.ResourceName)}" title="Save"><i class="fas fa-heart" aria-hidden="true"></i></button>
+        <a class="rcard" href="${esc(href)}"${external ? ' target="_blank" rel="noopener noreferrer"' : ''}>
             <div class="rcard-media">
                 <img src="${esc(img)}" alt="" loading="lazy" decoding="async" data-fallback="${esc(placeholderFor(r))}">
                 ${ribbon(mine)}
@@ -100,7 +108,8 @@
                         : 'Details <i class="fas fa-arrow-right" aria-hidden="true"></i>'}</span>
                 </div>
             </div>
-        </a>`;
+        </a>
+        </div>`;
     }
 
     function skeletons(n) {
@@ -169,14 +178,18 @@
     function applyFilters() {
         const q = search.value.trim().toLowerCase();
         const active = selects.filter((s) => s.value);
+        savedIds = Saved.get('resources');
         filtered = all.filter((r) => {
+            if (savedOnly && !savedIds.has(String(r.id))) return false;
             if (priority && !(r.Categories || []).includes(priority)) return false;
             if (q && ![r.ResourceName, r.Description, r.MetaData, r.Ministry, r.ResourceType].some((v) => (v || '').toLowerCase().includes(q))) return false;
             return active.every((s) => r[s.dataset.field] === s.value);
         });
+        // Saved resources come first; otherwise keep the original order (stable sort)
+        if (savedIds.size) filtered.sort((a, b) => savedIds.has(String(b.id)) - savedIds.has(String(a.id)));
         selects.forEach((s) => s.classList.toggle('has-value', !!s.value));
         searchWrap.classList.toggle('has-value', !!search.value);
-        clear.hidden = !(q || active.length || priority);
+        clear.hidden = !(q || active.length || priority || savedOnly);
         updateUrl(q);
 
         // Cards glide to their new positions where the browser supports it
@@ -195,6 +208,13 @@
 
         rollCount(filtered.length);
         empty.hidden = filtered.length > 0;
+        if (!filtered.length) {
+            const noneSaved = savedOnly && !savedIds.size;
+            empty.querySelector('h2').textContent = noneSaved ? 'Nothing saved yet' : 'No resources match';
+            empty.querySelector('p').textContent = noneSaved
+                ? 'Tap the heart on any resource to save it here. Saved resources also show first when you browse.'
+                : 'Try a different search term, or clear the filters to see everything.';
+        }
         grid.hidden = filtered.length === 0;
         more.hidden = shown >= filtered.length;
         moreInfo.hidden = more.hidden;
@@ -223,6 +243,7 @@
         const params = new URLSearchParams();
         if (q) params.set('q', search.value.trim());
         if (priority) params.set('priority', priority);
+        if (savedOnly) params.set('saved', '1');
         selects.forEach((s) => { if (s.value) params.set(s.dataset.param, s.value); });
         const qs = params.toString();
         history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
@@ -250,10 +271,32 @@
         search.value = '';
         selects.forEach((s) => { s.value = ''; });
         setPriority('');
+        setSavedOnly(false);
         applyFilters();
     };
     clear.addEventListener('click', resetFilters);
     $('noResultsClear').addEventListener('click', resetFilters);
+
+    // ---------- Saved ----------
+    function updateSavedToggle() {
+        if (!savedToggle) return;
+        const ids = Saved.get('resources');
+        const n = all.filter((r) => ids.has(String(r.id))).length;
+        savedToggle.querySelector('.n').textContent = n;
+        savedToggle.hidden = n === 0 && !savedOnly;
+    }
+    function setSavedOnly(on) {
+        savedOnly = on;
+        savedToggle?.setAttribute('aria-pressed', String(on));
+    }
+    savedToggle?.addEventListener('click', () => { setSavedOnly(!savedOnly); applyFilters(); });
+    Saved.onChange((kind) => {
+        if (kind !== 'resources') return;
+        savedIds = Saved.get('resources');
+        updateSavedToggle();
+        // Showing only saved items: drop an un-hearted card right away
+        if (savedOnly) applyFilters();
+    });
 
     // Press "/" anywhere to jump to search
     document.addEventListener('keydown', (e) => {
@@ -296,6 +339,8 @@
             selects.forEach((s) => { const v = params.get(s.dataset.param); if (v) s.value = v; });
             const p = params.get('priority');
             setPriority(pswitch && PRIORITIES.some(([name]) => name === p) ? p : '');
+            setSavedOnly(params.get('saved') === '1');
+            updateSavedToggle();
             grid.innerHTML = '';
             applyFilters();
         })
