@@ -1,6 +1,11 @@
 <?php
 // Load site settings from database
 require_once __DIR__ . '/settings.php';
+
+// The Resources nav URL is stored empty in site_settings, which makes the link reload the current page.
+if (get_setting('nav_link_1_url') === '') {
+    $site_settings['nav_link_1_url'] = '/';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
