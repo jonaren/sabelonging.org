@@ -339,6 +339,11 @@ if (empty($existing_category_ids) && !empty($resource['category_id'])) {
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="websites.php">
+                                <i class="fas fa-window-maximize"></i> Websites
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="categories.php">
                                 <i class="fas fa-tags"></i> Categories
                             </a>
